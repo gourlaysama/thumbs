@@ -1,0 +1,15 @@
+[package]
+name = "unthumnailer"
+version = "0.1.0"
+authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
+edition = "2018"
+
+[dependencies]
+structopt = "0.2"
+common_failures = "0.1"
+failure = "0.1"
+url = "1.7"
+md5 = "0.6"
+log = "0.4"
+stderrlog = "0.4"
+dirs = "1.0"

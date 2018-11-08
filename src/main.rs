@@ -58,10 +58,13 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
 
+    let mut loc = dirs::cache_dir().ok_or_else(|| format_err!("Could not find cache directory"))?;
+    loc.push("thumbnails/");
+
     let mut nb_thumbs = 0;
 
     for path in &args.files {
-        nb_thumbs += handle_file(path, &args)?;
+        nb_thumbs += handle_file(path, &args, &loc.as_path())?;
     }
 
     if !args.quiet {
@@ -84,18 +87,20 @@ fn run() -> Result<bool> {
     }
 }
 
-fn handle_file(path: &Path, args: &Cli) -> Result<u32> {
+fn handle_file(path: &Path, args: &Cli, cache: &Path) -> Result<u32> {
     let mut nb_thumbs = 0;
 
     if path.is_dir() {
         debug!("Recursing into directory {:?}", path);
         if args.recursive {
             for entry in path.read_dir()? {
-                nb_thumbs += handle_file(&entry?.path(), args)?;
+                nb_thumbs += handle_file(&entry?.path(), args, &cache)?;
             }
         } else {
-            warn!("Ignoring directory {}. Use '-r/--recursive' to recurse into directories.", 
-            path.to_string_lossy());
+            warn!(
+                "Ignoring directory {}. Use '-r/--recursive' to recurse into directories.",
+                path.to_string_lossy()
+            );
         }
 
         return Ok(nb_thumbs);
@@ -114,13 +119,10 @@ fn handle_file(path: &Path, args: &Cli) -> Result<u32> {
 
     debug!("Processing {:?} ({:x})", path, digest);
 
-    let mut loc = dirs::home_dir().ok_or_else(|| format_err!("Could not find home directory"))?;
-    loc.push(".cache/thumbnails/");
-
     let mut thumb_seen = false;
 
     for tpe in ["normal", "large", "fail/gnome-thumbnail-factory"].iter() {
-        let mut thumb = PathBuf::from(&loc.as_path());
+        let mut thumb = PathBuf::from(&cache);
         thumb.push(tpe);
         thumb.push(format!("{:x}", digest));
         thumb.set_extension("png");

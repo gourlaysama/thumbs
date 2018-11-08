@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
+use walkdir::WalkDir;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "unthumnailer", about = "Deletes cached thumnails for files.")]
@@ -25,6 +26,10 @@ struct Cli {
     #[structopt(short, long)]
     /// Recurse through directories
     recursive: bool,
+
+    #[structopt(short, long)]
+    /// Include hidden files and directories
+    hidden: bool,
 
     #[structopt(parse(from_os_str))]
     files: Vec<PathBuf>,
@@ -71,7 +76,7 @@ fn run() -> Result<bool> {
     locations.push(cache.join("normal"));
     locations.push(cache.join("large"));
     if log_enabled!(log::Level::Debug) {
-        debug!("Will look for thumnails in the following directories:");
+        debug!("Will look for thumbnails in the following directories:");
         for loc in &locations {
             debug!("{}", loc.to_string_lossy());
         }
@@ -80,7 +85,30 @@ fn run() -> Result<bool> {
     let mut nb_thumbs = 0;
 
     for path in &args.files {
-        nb_thumbs += handle_file(path, &args, &locations)?;
+        if args.recursive {
+            for entry in WalkDir::new(path)
+                .min_depth(1)
+                .into_iter()
+                .filter_entry(|e| args.hidden || !file_is_hidden(e))
+                .filter_map(|e| e.ok())
+                .filter(|e| !e.file_type().is_dir())
+            {
+                nb_thumbs += handle_file(entry.path(), &args, &locations)?;
+            }
+        } else if path.is_dir() {
+            warn!(
+                "Ignoring directory {}. Use '-r/--recursive' to recurse into directories.",
+                path.to_string_lossy()
+            );
+        } else if args.hidden
+            || !path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .map(|s| s.starts_with('.'))
+                .unwrap_or(false)
+        {
+            nb_thumbs += handle_file(path, &args, &locations)?;
+        }
     }
 
     if !args.quiet {
@@ -103,24 +131,16 @@ fn run() -> Result<bool> {
     }
 }
 
+fn file_is_hidden(entry: &walkdir::DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with('.'))
+        .unwrap_or(false)
+}
+
 fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
     let mut nb_thumbs = 0;
-
-    if path.is_dir() {
-        debug!("Recursing into directory {:?}", path);
-        if args.recursive {
-            for entry in path.read_dir()? {
-                nb_thumbs += handle_file(&entry?.path(), args, &locations)?;
-            }
-        } else {
-            warn!(
-                "Ignoring directory {}. Use '-r/--recursive' to recurse into directories.",
-                path.to_string_lossy()
-            );
-        }
-
-        return Ok(nb_thumbs);
-    }
 
     // TODO is canonicalize too much? (it resolves symlinks)
     let url = if !path.is_absolute() {

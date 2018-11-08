@@ -2,7 +2,7 @@ use common_failures::prelude::*;
 use failure::format_err;
 use log::*;
 use std::fs::remove_file;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
@@ -10,7 +10,7 @@ use url::Url;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "unthumnailer", about = "Deletes cached thumnails for files.")]
 struct Cli {
-    #[structopt(short = "d", long = "dry-run")]
+    #[structopt(short, long = "dry-run")]
     /// Do not actually delete anything
     dry_run: bool,
 
@@ -21,6 +21,10 @@ struct Cli {
     #[structopt(short, long)]
     /// Quiets all output
     quiet: bool,
+
+    #[structopt(short, long)]
+    /// Recurse through directories
+    recursive: bool,
 
     #[structopt(parse(from_os_str))]
     files: Vec<PathBuf>,
@@ -56,64 +60,16 @@ fn run() -> Result<bool> {
 
     let mut nb_thumbs = 0;
 
-    for path in args.files {
-        // TODO is canonicalize too much? (it resolves symlinks)
-        let path = if !path.is_absolute() {
-            path.canonicalize()?
-        } else {
-            path
-        };
-        let url = Url::from_file_path(&path)
-            .map_err(|_| format_err!("Non absolute path: {:?}", &path))?;
-        trace!("Url: {:?}", url);
-        let digest = md5::compute(url.as_str().as_bytes());
-
-        debug!("Processing {:?} ({:x})", path, digest);
-
-        let mut loc =
-            dirs::home_dir().ok_or_else(|| format_err!("Could not find home directory"))?;
-        loc.push(".cache/thumbnails/");
-
-        let mut thumb_seen = false;
-
-        for tpe in ["normal", "large", "fail/gnome-thumbnail-factory"].iter() {
-            let mut thumb = PathBuf::from(&loc.as_path());
-            thumb.push(tpe);
-            thumb.push(format!("{:x}", digest));
-            thumb.set_extension("png");
-            if thumb.exists() {
-                debug!("  Found      {:?}", thumb);
-                thumb_seen = true;
-                nb_thumbs += 1;
-                if args.dry_run {
-                    if !args.quiet {
-                        info!("Would delete a thumbnail for {}", path.to_string_lossy());
-                    }
-                } else {
-                    if !args.quiet {
-                        info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
-                    }
-                    remove_file(&thumb).io_write_context(&thumb)?;
-                }
-            } else {
-                debug!("  Not found  {:?}", thumb);
-            }
-        }
-
-        if !thumb_seen {
-            info!(
-                "Could not find a thumbnail for '{}'",
-                path.to_string_lossy()
-            );
-        }
+    for path in &args.files {
+        nb_thumbs += handle_file(path, &args)?;
     }
 
     if !args.quiet {
         if nb_thumbs == 0 {
-            warn!("Found no thumbnail to delete. Rerun with '-vv' for detailed information.")
+            warn!("Found no thumbnail to delete. Rerun with '-vv/--verbose 2' for detailed information.")
         } else if args.dry_run {
             println!(
-                "Found {} thumbnail(s) to delete: add '-v' for details, or remove '--dry-run' to delete.",
+                "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.",
                 nb_thumbs
             );
         } else {
@@ -126,4 +82,73 @@ fn run() -> Result<bool> {
     } else {
         Ok(nb_thumbs != 0)
     }
+}
+
+fn handle_file(path: &Path, args: &Cli) -> Result<u32> {
+    let mut nb_thumbs = 0;
+
+    if path.is_dir() {
+        debug!("Recursing into directory {:?}", path);
+        if args.recursive {
+            for entry in path.read_dir()? {
+                nb_thumbs += handle_file(&entry?.path(), args)?;
+            }
+        } else {
+            warn!("Ignoring directory {}. Use '-r/--recursive' to recurse into directories.", 
+            path.to_string_lossy());
+        }
+
+        return Ok(nb_thumbs);
+    }
+
+    // TODO is canonicalize too much? (it resolves symlinks)
+    let url = if !path.is_absolute() {
+        Url::from_file_path(&path.canonicalize()?)
+    } else {
+        Url::from_file_path(&path)
+    }
+    .map_err(|_| format_err!("Non absolute path: {:?}", &path))?;
+    trace!("Url: {:?}", url);
+
+    let digest = md5::compute(url.as_str().as_bytes());
+
+    debug!("Processing {:?} ({:x})", path, digest);
+
+    let mut loc = dirs::home_dir().ok_or_else(|| format_err!("Could not find home directory"))?;
+    loc.push(".cache/thumbnails/");
+
+    let mut thumb_seen = false;
+
+    for tpe in ["normal", "large", "fail/gnome-thumbnail-factory"].iter() {
+        let mut thumb = PathBuf::from(&loc.as_path());
+        thumb.push(tpe);
+        thumb.push(format!("{:x}", digest));
+        thumb.set_extension("png");
+        if thumb.exists() {
+            debug!("  Found      {:?}", thumb);
+            thumb_seen = true;
+            nb_thumbs += 1;
+            if args.dry_run {
+                if !args.quiet {
+                    info!("Would delete a thumbnail for {}", path.to_string_lossy());
+                }
+            } else {
+                if !args.quiet {
+                    info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
+                }
+                remove_file(&thumb).io_write_context(&thumb)?;
+            }
+        } else {
+            debug!("  Not found  {:?}", thumb);
+        }
+    }
+
+    if !thumb_seen {
+        debug!(
+            "Could not find a thumbnail for '{}'",
+            path.to_string_lossy()
+        );
+    }
+
+    Ok(nb_thumbs)
 }

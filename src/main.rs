@@ -58,13 +58,29 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
 
-    let mut loc = dirs::cache_dir().ok_or_else(|| format_err!("Could not find cache directory"))?;
-    loc.push("thumbnails/");
+    let mut cache =
+        dirs::cache_dir().ok_or_else(|| format_err!("Could not find cache directory"))?;
+    cache.push("thumbnails/");
+    // TODO this ignores errors in iterating the subdirs
+    let mut locations: Vec<_> = cache
+        .join("fail")
+        .read_dir()?
+        .flat_map(|d| d)
+        .map(|e| e.path())
+        .collect();
+    locations.push(cache.join("normal"));
+    locations.push(cache.join("large"));
+    if log_enabled!(log::Level::Debug) {
+        debug!("Will look for thumnails in the following directories:");
+        for loc in &locations {
+            debug!("{}", loc.to_string_lossy());
+        }
+    }
 
     let mut nb_thumbs = 0;
 
     for path in &args.files {
-        nb_thumbs += handle_file(path, &args, &loc.as_path())?;
+        nb_thumbs += handle_file(path, &args, &locations)?;
     }
 
     if !args.quiet {
@@ -87,14 +103,14 @@ fn run() -> Result<bool> {
     }
 }
 
-fn handle_file(path: &Path, args: &Cli, cache: &Path) -> Result<u32> {
+fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
     let mut nb_thumbs = 0;
 
     if path.is_dir() {
         debug!("Recursing into directory {:?}", path);
         if args.recursive {
             for entry in path.read_dir()? {
-                nb_thumbs += handle_file(&entry?.path(), args, &cache)?;
+                nb_thumbs += handle_file(&entry?.path(), args, &locations)?;
             }
         } else {
             warn!(
@@ -121,9 +137,8 @@ fn handle_file(path: &Path, args: &Cli, cache: &Path) -> Result<u32> {
 
     let mut thumb_seen = false;
 
-    for tpe in ["normal", "large", "fail/gnome-thumbnail-factory"].iter() {
-        let mut thumb = PathBuf::from(&cache);
-        thumb.push(tpe);
+    for location in locations.iter() {
+        let mut thumb = location.clone();
         thumb.push(format!("{:x}", digest));
         thumb.set_extension("png");
         if thumb.exists() {
@@ -138,7 +153,7 @@ fn handle_file(path: &Path, args: &Cli, cache: &Path) -> Result<u32> {
                 if !args.quiet {
                     info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
                 }
-                remove_file(&thumb).io_write_context(&thumb)?;
+                remove_file(&thumb).io_write_context(thumb)?;
             }
         } else {
             debug!("  Not found  {:?}", thumb);

@@ -57,6 +57,12 @@ fn run() -> Result<bool> {
     let mut nb_thumbs = 0;
 
     for path in args.files {
+        // TODO is canonicalize too much? (it resolves symlinks)
+        let path = if !path.is_absolute() {
+            path.canonicalize()?
+        } else {
+            path
+        };
         let url = Url::from_file_path(&path)
             .map_err(|_| format_err!("Non absolute path: {:?}", &path))?;
         trace!("Url: {:?}", url);

@@ -1,9 +1,9 @@
 use common_failures::prelude::*;
-use common_failures::quick_main;
 use failure::format_err;
 use log::*;
 use std::fs::remove_file;
 use std::path::PathBuf;
+use std::process::exit;
 use structopt::StructOpt;
 use url::Url;
 
@@ -26,14 +26,32 @@ struct Cli {
     files: Vec<PathBuf>,
 }
 
-quick_main!(run);
+fn main() {
+    match run() {
+        // Everything ok
+        Ok(true) => exit(0),
+        // Found nothing to delete
+        Ok(false) => exit(125),
+        Err(e) => {
+            // We can't log the error if it's the logger that failed
+            if e.downcast_ref::<log::SetLoggerError>().is_some() {
+                eprintln!("{}", e.display_causes_without_backtrace());
+            } else {
+                debug!("{}", e.display_causes_without_backtrace());
+                error!("{}", e);
+            }
+            exit(1)
+        }
+    }
+}
 
-fn run() -> Result<()> {
+fn run() -> Result<bool> {
     let args = Cli::from_args();
     stderrlog::new().verbosity(args.verbose + 1).init()?;
 
     if args.files.is_empty() {
         Cli::clap().print_help()?;
+        return Ok(true);
     }
 
     let mut nb_thumbs = 0;
@@ -43,7 +61,7 @@ fn run() -> Result<()> {
             .map_err(|_| format_err!("Non absolute path: {:?}", &path))?;
         trace!("Url: {:?}", url);
         let digest = md5::compute(url.as_str().as_bytes());
-        
+
         debug!("Processing {:?} ({:x})", path, digest);
 
         let mut loc =
@@ -51,7 +69,7 @@ fn run() -> Result<()> {
         loc.push(".cache/thumbnails/");
 
         let mut thumb_seen = false;
-        
+
         for tpe in ["normal", "large", "fail/gnome-thumbnail-factory"].iter() {
             let mut thumb = PathBuf::from(&loc.as_path());
             thumb.push(tpe);
@@ -69,7 +87,7 @@ fn run() -> Result<()> {
                     if !args.quiet {
                         info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
                     }
-                    remove_file(&thumb)?;
+                    remove_file(&thumb).io_write_context(&thumb)?;
                 }
             } else {
                 debug!("  Not found  {:?}", thumb);
@@ -77,7 +95,10 @@ fn run() -> Result<()> {
         }
 
         if !thumb_seen {
-            info!("Could not find a thumbnail for '{}'", path.to_string_lossy());
+            info!(
+                "Could not find a thumbnail for '{}'",
+                path.to_string_lossy()
+            );
         }
     }
 
@@ -94,5 +115,9 @@ fn run() -> Result<()> {
         }
     }
 
-    Ok(())
+    if args.dry_run {
+        Ok(true)
+    } else {
+        Ok(nb_thumbs != 0)
+    }
 }

@@ -1,5 +1,6 @@
 use common_failures::prelude::*;
 use failure::format_err;
+use lazy_static::lazy_static;
 use log::*;
 use std::fs::remove_file;
 use std::path::{Path, PathBuf};
@@ -9,15 +10,29 @@ use structopt::StructOpt;
 use url::Url;
 use walkdir::WalkDir;
 
+lazy_static! {
+    static ref VERSION: String = {
+        let hash = match option_env!("THUMB_GIT_HASH") {
+            None => String::new(),
+            Some(hash) => format!("-pre-{}", hash),
+        };
+
+        format!("{}{}", structopt::clap::crate_version!(), hash)
+    };
+}
+
 #[derive(Debug, StructOpt)]
 #[structopt(
     about = "Utility to find and delete generated thumbnails.",
     rename_all = "kebab",
-    raw(global_settings = "
+    raw(
+        global_settings = "
         &[AppSettings::ColoredHelp,
           AppSettings::ArgRequiredElseHelp,
           AppSettings::VersionlessSubcommands,
-          AppSettings::InferSubcommands]")
+          AppSettings::InferSubcommands]",
+        version = "VERSION.as_str()"
+    )
 )]
 struct Cli {
     #[structopt(short, long, parse(from_occurrences), raw(global = "true"))]

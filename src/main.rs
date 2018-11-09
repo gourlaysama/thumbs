@@ -4,35 +4,62 @@ use log::*;
 use std::fs::remove_file;
 use std::path::{Path, PathBuf};
 use std::process::exit;
+use structopt::clap::AppSettings;
 use structopt::StructOpt;
 use url::Url;
 use walkdir::WalkDir;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "unthumnailer", about = "Deletes cached thumnails for files.")]
+#[structopt(
+    name = "unthumnailer",
+    about = "Deletes cached thumnails for files.",
+    rename_all = "kebab",
+    raw(global_settings = "
+        &[AppSettings::ColoredHelp,
+          AppSettings::ArgRequiredElseHelp,
+          AppSettings::VersionlessSubcommands,
+          AppSettings::InferSubcommands]")
+)]
 struct Cli {
-    #[structopt(short, long = "dry-run")]
-    /// Do not actually delete anything
-    dry_run: bool,
-
-    #[structopt(short, long, parse(from_occurrences))]
+    #[structopt(short, long, parse(from_occurrences), raw(global = "true"))]
     /// Verbosity
     verbose: usize,
 
-    #[structopt(short, long)]
+    #[structopt(short, long, raw(global = "true"))]
     /// Quiets all output
     quiet: bool,
 
-    #[structopt(short, long)]
+    #[structopt(short, long, raw(global = "true"))]
     /// Recurse through directories
     recursive: bool,
 
-    #[structopt(short, long)]
+    #[structopt(short, long, raw(global = "true"))]
     /// Include hidden files and directories
     hidden: bool,
 
-    #[structopt(parse(from_os_str))]
-    files: Vec<PathBuf>,
+    #[structopt(subcommand)]
+    cmd: Command,
+}
+
+#[derive(Debug, StructOpt)]
+#[structopt(rename_all = "kebab_case")]
+enum Command {
+    /// Delete the thumbnails for the given files
+    Delete {
+        #[structopt(short, long)]
+        /// Do not actually delete anything
+        dry_run: bool,
+
+        #[structopt(parse(from_os_str))]
+        /// Files whose thumbnails to delete
+        files: Vec<PathBuf>,
+    },
+    /// Print the path of thumbnails for the given files
+    Locate {
+        #[structopt(parse(from_os_str))]
+        /// Files whose thumbnails to find
+        files: Vec<PathBuf>,
+    },
 }
 
 fn main() {
@@ -58,33 +85,15 @@ fn run() -> Result<bool> {
     let args = Cli::from_args();
     stderrlog::new().verbosity(args.verbose + 1).init()?;
 
-    if args.files.is_empty() {
-        Cli::clap().print_help()?;
-        return Ok(true);
-    }
+    let (files, dry_run) = match &args.cmd {
+        Command::Delete { files, dry_run } => (files, *dry_run),
+        Command::Locate { files } => (files, false),
+    };
 
-    let mut cache =
-        dirs::cache_dir().ok_or_else(|| format_err!("Could not find cache directory"))?;
-    cache.push("thumbnails/");
-    // TODO this ignores errors in iterating the subdirs
-    let mut locations: Vec<_> = cache
-        .join("fail")
-        .read_dir()?
-        .flat_map(|d| d)
-        .map(|e| e.path())
-        .collect();
-    locations.push(cache.join("normal"));
-    locations.push(cache.join("large"));
-    if log_enabled!(log::Level::Debug) {
-        debug!("Will look for thumbnails in the following directories:");
-        for loc in &locations {
-            debug!("{}", loc.to_string_lossy());
-        }
-    }
-
+    let locations = find_cache_location()?;
     let mut nb_thumbs = 0;
 
-    for path in &args.files {
+    for path in files {
         if args.recursive {
             for entry in WalkDir::new(path)
                 .min_depth(1)
@@ -113,18 +122,18 @@ fn run() -> Result<bool> {
 
     if !args.quiet {
         if nb_thumbs == 0 {
-            warn!("Found no thumbnail to delete. Rerun with '-vv/--verbose 2' for detailed information.")
-        } else if args.dry_run {
+            warn!("Found no thumbnails. Rerun with '-vv/--verbose 2' for detailed information.")
+        } else if dry_run {
             println!(
                 "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.",
                 nb_thumbs
             );
-        } else {
+        } else if let Command::Delete { .. } = args.cmd {
             println!("Deleted {} thumbnail(s).", nb_thumbs);
         }
     }
 
-    if args.dry_run {
+    if dry_run {
         Ok(true)
     } else {
         Ok(nb_thumbs != 0)
@@ -137,6 +146,29 @@ fn file_is_hidden(entry: &walkdir::DirEntry) -> bool {
         .to_str()
         .map(|s| s.starts_with('.'))
         .unwrap_or(false)
+}
+
+fn find_cache_location() -> Result<Vec<PathBuf>> {
+    let mut cache =
+        dirs::cache_dir().ok_or_else(|| format_err!("Could not find cache directory"))?;
+    cache.push("thumbnails/");
+    // TODO this ignores errors in iterating the subdirs
+    let mut locations: Vec<_> = cache
+        .join("fail")
+        .read_dir()?
+        .flat_map(|d| d)
+        .map(|e| e.path())
+        .collect();
+    locations.push(cache.join("normal"));
+    locations.push(cache.join("large"));
+    if log_enabled!(log::Level::Debug) {
+        debug!("Will look for thumbnails in the following directories:");
+        for loc in &locations {
+            debug!("{}", loc.to_string_lossy());
+        }
+    }
+
+    Ok(locations)
 }
 
 fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
@@ -165,16 +197,23 @@ fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
             debug!("  Found      {:?}", thumb);
             thumb_seen = true;
             nb_thumbs += 1;
-            if args.dry_run {
-                if !args.quiet {
-                    info!("Would delete a thumbnail for {}", path.to_string_lossy());
+            match args.cmd {
+                Command::Delete { dry_run, .. } => {
+                    if dry_run {
+                        if !args.quiet {
+                            info!("Would delete a thumbnail for {}", path.to_string_lossy());
+                        }
+                    } else {
+                        if !args.quiet {
+                            info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
+                        }
+                        remove_file(&thumb).io_write_context(thumb)?;
+                    }
                 }
-            } else {
-                if !args.quiet {
-                    info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
+                Command::Locate { .. } => {
+                    println!("{}", thumb.to_string_lossy());
                 }
-                remove_file(&thumb).io_write_context(thumb)?;
-            }
+            };
         } else {
             debug!("  Not found  {:?}", thumb);
         }

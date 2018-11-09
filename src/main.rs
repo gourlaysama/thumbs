@@ -35,7 +35,7 @@ struct Cli {
 
     #[structopt(short, long, raw(global = "true"))]
     /// Include hidden files and directories
-    hidden: bool,
+    all: bool,
 
     #[structopt(subcommand)]
     cmd: Command,
@@ -98,7 +98,7 @@ fn run() -> Result<bool> {
             for entry in WalkDir::new(path)
                 .min_depth(1)
                 .into_iter()
-                .filter_entry(|e| args.hidden || !file_is_hidden(e))
+                .filter_entry(|e| args.all || !file_is_hidden(e))
                 .filter_map(|e| e.ok())
                 .filter(|e| !e.file_type().is_dir())
             {
@@ -109,7 +109,7 @@ fn run() -> Result<bool> {
                 "Ignoring directory {}. Use '-r/--recursive' to recurse into directories.",
                 path.to_string_lossy()
             );
-        } else if args.hidden
+        } else if args.all
             || !path
                 .file_name()
                 .and_then(|s| s.to_str())

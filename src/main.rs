@@ -104,7 +104,7 @@ fn run() -> Result<bool> {
             {
                 nb_thumbs += handle_file(entry.path(), &args, &locations)?;
             }
-        } else if path.is_dir() {
+        } else if path.is_dir() && !args.quiet {
             warn!(
                 "Ignoring directory {}. Use '-r/--recursive' to recurse into directories.",
                 path.to_string_lossy()

@@ -11,8 +11,7 @@ use walkdir::WalkDir;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "unthumnailer",
-    about = "Deletes cached thumnails for files.",
+    about = "Utility to find and delete generated thumbnails.",
     rename_all = "kebab",
     raw(global_settings = "
         &[AppSettings::ColoredHelp,

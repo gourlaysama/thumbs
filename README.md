@@ -1,10 +1,10 @@
 thumbs
 -------------
-thumbs is a commandline tool to remove the cached thumbnails for files.
+thumbs is a command line tool to manage the cached thumbnails for files.
 
 It supports any desktop environnement that respects the
 [Freedesktop Thumbnail Managing Standard][2], so at least modern versions of KDE
-and Gnome.
+and Gnome, and probably others.
 
  - Deleting thumbnails:
 
@@ -27,13 +27,19 @@ $ cp `thumbs locate MyMovie.mkv | head -1` MyMovie_thumbnail.png
 
 ```
 
+TODO:
+ - [ ] Cleanup thumbnails for files that don't exist
+ - [ ] Cleanup thumbnails for files not accessed in `duration`
+ - [ ] Generate thumbnails for files?
+ - [ ] Find out which DE this works with
+
 ### Building
 
 thumbs is written in Rust, so you'll need to [install Rust][1] first. It
 also requires Rust 2018 edition, which is currently limited to the nigthly or
-beta channel or Rust.
+beta channel of Rust.
 
-```
+```sh
 git clone https://github.com/gourlaysama/thumbs
 cd thumbs
 cargo build --release

@@ -1,4 +1,4 @@
-thumbs
+thumbs [![Build Status](https://travis-ci.org/gourlaysama/thumbs.svg?branch=master)](https://travis-ci.org/gourlaysama/thumbs)
 -------------
 thumbs is a command line tool to manage the cached thumbnails for files.
 

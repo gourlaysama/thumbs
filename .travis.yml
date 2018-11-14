@@ -1,0 +1,45 @@
+language: rust
+
+rust:
+- beta
+- nightly
+
+matrix:
+  allow_failures:
+  - rust: nightly
+  fast_finish: true
+
+install:
+- rustc -Vv
+- cargo -V
+- source ~/.cargo/env || true
+
+script:
+- cargo build --verbose
+
+branches:
+  only:
+  - "/^v\\d+\\.\\d+\\.\\d+.*$/"
+  - master
+
+before_cache:
+- chmod -R a+r $HOME/.cargo
+
+cache: cargo
+
+notifications:
+  email:
+  - antoine@gourlay.fr
+
+before_deploy: ./ci/before_deploy.sh
+
+deploy:
+  provider: releases
+  api_key:
+    secure: lPbnG4G7kHifKjIh+1omsI5+FpFeva6TbyNYoMGNJ1mIS6alt3RTRfh+axUN9isZPrD/UpHTT0KZ46IP4l+3Y1HLgDDPTMga3i4/FN/w1S3oVoRBWRlrBKVNWn2C5V2C6k/4N877CY/VU1CmfJiZ4Kfh94KkyW8mJHWza1rKDoEfdIUgCqdN6PfSUp342FNI2V2cXSt3DQssg4I8txfdUZ2LatXnMYKmOf3EE/7g7+S3SMy/Do7MeKn2JSbR44LcQ/IQmwvUGmQ6eUIx4AWXPsMeUr7fuK0Va3BbAU3k1hJI5tLQXPGU4abHoSvAIJYFHnRbeRXN+/iT7rFZXgGxHGVIwvrzqSHgc0FZSBySFnmoXB2LYFfimpe02+iqOjzL3eVnnPKIVcGT75RUHe0zYHKKN4DTMBIzwyA1GJy3AiG4msE4MISWASK20OBZvoX40C7fNw5p4Poev1s0YcLsw50lkV7VBUyFlHkOB4dPpbrm8N+FzB6V+eiuqltETzKiqhVrDrU2Kb02LowjfsofMBmFxDApvuyjhzQD2SGoOMyHr6DLY5m25Uz9byUwqa66OnbCE5C6aIfSEyVc5Ud8yM7PfXmvHXO71Sz+yEzhltuQoS2naBH0NVCJezDVSNOpoL3XI62WFgP4mb5OkY1RVumg58L0EGjlE4xRFOagYJg=
+  file_glob: true
+  file: deploy/*
+  on:
+    repo: gourlaysama/thumbs
+    tags: true
+    condition: $TRAVIS_RUST_VERSION = beta

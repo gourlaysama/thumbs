@@ -18,4 +18,6 @@ fn main() {
             println!("cargo:rustc-env=THUMB_GIT_HASH={}", hash.trim());
         }
     }
+
+    built::write_built_file().expect("Failed to acquire build-time information.");
 }

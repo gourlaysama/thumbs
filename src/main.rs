@@ -21,6 +21,23 @@ lazy_static! {
     };
 }
 
+lazy_static! {
+    static ref LONG_VERSION: String = {
+        format!(
+            "{}\nbuilt with {}\non {}{}{}",
+            VERSION.as_str(),
+            built_info::RUSTC_VERSION,
+            built_info::BUILT_TIME_UTC,
+            if built_info::FEATURES.is_empty() {
+                String::new()
+            } else {
+                format!("\n+features: {}", built_info::FEATURES_STR.to_lowercase())
+            },
+            if built_info::DEBUG { "\n+debug" } else { "" }
+        )
+    };
+}
+
 #[derive(Debug, StructOpt)]
 #[structopt(
     about = "Utility to find and delete generated thumbnails.",
@@ -31,7 +48,8 @@ lazy_static! {
           AppSettings::ArgRequiredElseHelp,
           AppSettings::VersionlessSubcommands,
           AppSettings::InferSubcommands]",
-        version = "VERSION.as_str()"
+        version = "VERSION.as_str()",
+        long_version = "LONG_VERSION.as_str()",
     )
 )]
 struct Cli {
@@ -241,4 +259,8 @@ fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
     }
 
     Ok(nb_thumbs)
+}
+
+pub mod built_info {
+    include!(concat!(env!("OUT_DIR"), "/built.rs"));
 }

@@ -16,6 +16,9 @@ dirs = "1.0"
 walkdir = "2.2"
 lazy_static = "1.2"
 
+[build-dependencies]
+built = "0.3"
+
 [profile.release]
 lto = true
 panic = 'abort'

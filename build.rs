@@ -1,6 +1,13 @@
+use std::env::var;
 use std::process;
 
 fn main() {
+    assert!(
+        var("CARGO_FEATURE_CLEANUP").is_err() || var("CARGO_FEATURE_CLEANUP_MAGICK6").is_err(),
+        "the 'cleanup' and 'cleanup-magick6' features cannot be set at the same time: they do the
+same thing with bindings for ImageMagick 7 and 6, respectively."
+    );
+
     let is_tag = process::Command::new("git")
         .args(&["describe", "--exact-match", "--tags"])
         .stderr(process::Stdio::null())

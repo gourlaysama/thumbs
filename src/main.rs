@@ -28,10 +28,12 @@ lazy_static! {
             VERSION.as_str(),
             built_info::RUSTC_VERSION,
             built_info::BUILT_TIME_UTC,
-            if built_info::FEATURES.is_empty() {
-                String::new()
+            if built_info::FEATURES.contains(&"CLEANUP") {
+                "\n+cleanup (ImageMagick 7)"
+            } else if built_info::FEATURES.contains(&"CLEANUP_MAGICK6") {
+                "\n+cleanup (ImageMagick 6)"
             } else {
-                format!("\n+features: {}", built_info::FEATURES_STR.to_lowercase())
+                ""
             },
             if built_info::DEBUG { "\n+debug" } else { "" }
         )
@@ -45,7 +47,6 @@ lazy_static! {
     raw(
         global_settings = "
         &[AppSettings::ColoredHelp,
-          AppSettings::ArgRequiredElseHelp,
           AppSettings::VersionlessSubcommands,
           AppSettings::InferSubcommands]",
         version = "VERSION.as_str()",
@@ -92,20 +93,34 @@ enum Command {
         /// Files whose thumbnails to find
         files: Vec<PathBuf>,
     },
+    #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+    Cleanup {
+        #[structopt(short, long)]
+        /// Do not actually delete anything
+        dry_run: bool,
+
+        #[structopt(short, long, parse(from_os_str))]
+        /// Prefix paths of files to ignore
+        ignore: Vec<PathBuf>,
+    },
 }
 
 fn main() {
     match run() {
         // Everything ok
         Ok(true) => exit(0),
-        // Found nothing to delete
+        // Found nothing to do
         Ok(false) => exit(125),
         Err(e) => {
             // We can't log the error if it's the logger that failed
             if e.downcast_ref::<log::SetLoggerError>().is_some() {
                 eprintln!("{}", e.display_causes_without_backtrace());
             } else {
-                debug!("{}", e.display_causes_without_backtrace());
+                if log_enabled!(log::Level::Trace) {
+                    trace!("{}", e.display_causes_and_backtrace());
+                } else {
+                    debug!("{}", e.display_causes_without_backtrace());
+                }
                 error!("{}", e);
             }
             exit(1)
@@ -117,15 +132,25 @@ fn run() -> Result<bool> {
     let args = Cli::from_args();
     stderrlog::new().verbosity(args.verbose + 1).init()?;
 
-    let (files, dry_run) = match &args.cmd {
+    match &args.cmd {
+        #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+        Command::Cleanup { dry_run, ignore } => cleanup(&args, *dry_run, &ignore),
+        _ => locate_or_delete(&args),
+    }
+}
+
+fn locate_or_delete(args: &Cli) -> Result<bool> {
+    let (files, dry_run): (&[PathBuf], bool) = match &args.cmd {
         Command::Delete { files, dry_run } => (files, *dry_run),
         Command::Locate { files } => (files, false),
+        #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+        _ => panic!("Unreachable code; this is a bug."),
     };
 
-    let locations = find_cache_location()?;
+    let locations = find_cache_location(true)?;
     let mut nb_thumbs = 0;
 
-    for path in files {
+    for path in files.iter() {
         if args.recursive {
             for entry in WalkDir::new(path)
                 .min_depth(1)
@@ -180,17 +205,22 @@ fn file_is_hidden(entry: &walkdir::DirEntry) -> bool {
         .unwrap_or(false)
 }
 
-fn find_cache_location() -> Result<Vec<PathBuf>> {
+fn find_cache_location(include_fail: bool) -> Result<Vec<PathBuf>> {
     let mut cache =
         dirs::cache_dir().ok_or_else(|| format_err!("Could not find cache directory"))?;
     cache.push("thumbnails/");
+
     // TODO this ignores errors in iterating the subdirs
-    let mut locations: Vec<_> = cache
-        .join("fail")
-        .read_dir()?
-        .flat_map(|d| d)
-        .map(|e| e.path())
-        .collect();
+    let mut locations: Vec<_> = if include_fail {
+        cache
+            .join("fail")
+            .read_dir()?
+            .flat_map(|d| d)
+            .map(|e| e.path())
+            .collect()
+    } else {
+        Vec::new()
+    };
     locations.push(cache.join("normal"));
     locations.push(cache.join("large"));
     if log_enabled!(log::Level::Debug) {
@@ -245,6 +275,8 @@ fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
                 Command::Locate { .. } => {
                     println!("{}", thumb.to_string_lossy());
                 }
+                #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+                Command::Cleanup { .. } => {}
             };
         } else {
             debug!("  Not found  {:?}", thumb);
@@ -256,6 +288,108 @@ fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
             "Could not find a thumbnail for '{}'",
             path.to_string_lossy()
         );
+    }
+
+    Ok(nb_thumbs)
+}
+
+#[cfg(feature = "cleanup")]
+use magick_rust::{magick_wand_genesis, magick_wand_terminus, MagickWand};
+#[cfg(feature = "cleanup-magick6")]
+use magick_rust_6::{magick_wand_genesis, magick_wand_terminus, MagickWand};
+
+#[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+fn cleanup(args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<bool> {
+    magick_wand_genesis();
+
+    let locations = find_cache_location(false)?;
+    let mut nb_thumbs = 0;
+    for location in locations {
+        for entry in WalkDir::new(location)
+            .min_depth(1)
+            .into_iter()
+            .filter_entry(|e| {
+                args.all || !file_is_hidden(e) || !ignore.iter().any(|p| e.path().starts_with(p))
+            })
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
+            }) {
+            nb_thumbs += match clean_thumbnail(entry.path(), &args, dry_run, &ignore) {
+                Ok(nb) => nb,
+                Err(e) => {
+                    if log_enabled!(log::Level::Trace) {
+                        trace!(
+                            "{} for {}",
+                            e.display_causes_and_backtrace(),
+                            entry.path().to_string_lossy()
+                        );
+                    } else {
+                        debug!(
+                            "{} for {}",
+                            e.display_causes_without_backtrace(),
+                            entry.path().to_string_lossy()
+                        );
+                    }
+                    0
+                }
+            };
+        }
+    }
+
+    magick_wand_terminus();
+
+    if !args.quiet {
+        if nb_thumbs == 0 {
+            warn!("Found no thumbnails to cleanup. Rerun with '-vv/--verbose 2' for detailed information.")
+        } else if dry_run {
+            println!(
+                "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.",
+                nb_thumbs
+            );
+        } else {
+            println!("Deleted {} thumbnail(s).", nb_thumbs);
+        }
+    }
+
+    Ok(dry_run || nb_thumbs != 0)
+}
+
+#[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<u32> {
+    trace!("Processing {:?}", path);
+    let mut nb_thumbs = 0;
+    let origin = {
+        let wand = MagickWand::new();
+        let path_str = path.to_string_lossy();
+        wand.read_image(&path_str)
+            .map_err(|s| format_err!("{}", s))?;
+        wand.get_image_property("Thumb::URI")
+            .map_err(|s| format_err!("{}", s))?
+    };
+
+    let origin_url = Url::parse(&origin).map_err(|s| format_err!("{}", s))?;
+    if origin_url.scheme() == "file" {
+        let origin_path = origin_url.to_file_path().unwrap();
+        if !ignore.iter().any(|p| origin_path.starts_with(p)) && !origin_path.exists() {
+            nb_thumbs += 1;
+            if dry_run {
+                if !args.quiet {
+                    info!(
+                        "Would delete a thumbnail for {}",
+                        origin_path.to_string_lossy()
+                    );
+                }
+            } else {
+                if !args.quiet {
+                    info!(
+                        "Deleting a thumbnail for '{}'",
+                        origin_path.to_string_lossy()
+                    );
+                }
+                remove_file(&path).io_write_context(path)?;
+            }
+        }
     }
 
     Ok(nb_thumbs)

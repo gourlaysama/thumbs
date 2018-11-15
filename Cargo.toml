@@ -15,6 +15,13 @@ stderrlog = "0.4"
 dirs = "1.0"
 walkdir = "2.2"
 lazy_static = "1.2"
+magick_rust_6 = { version = "0.6", git = "https://github.com/gourlaysama/magick-rust", tag = "0.6.6-patched", optional = true }
+magick_rust = { version = "0.10", optional = true }
+
+[features]
+default = []
+cleanup = ["magick_rust"]
+cleanup-magick6 = ["magick_rust_6"]
 
 [build-dependencies]
 built = "0.3"

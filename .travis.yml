@@ -16,6 +16,7 @@ install:
 
 script:
 - cargo build --verbose
+- cargo build --release --verbose
 
 branches:
   only:

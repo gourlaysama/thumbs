@@ -457,7 +457,7 @@ dependencies = [
 
 [[package]]
 name = "thumbs"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "built 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "common_failures 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",

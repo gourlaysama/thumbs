@@ -2,17 +2,11 @@ language: rust
 
 rust:
 - beta
-- nightly
-
-matrix:
-  allow_failures:
-  - rust: nightly
-  fast_finish: true
 
 before_install:
 - sudo add-apt-repository ppa:opencpu/imdev -y
-- sudo apt-get update -y
-- sudo apt-get install libmagickwand-6-headers -y
+- sudo apt-get -qq update -y
+- sudo apt-get install -y --no-install-recommends libmagickwand-dev
 
 install:
 - rustc -Vv
@@ -22,11 +16,6 @@ install:
 script:
 - cargo build --verbose
 - cargo build --release --verbose
-
-branches:
-  only:
-  - "/^v\\d+\\.\\d+\\.\\d+.*$/"
-  - master
 
 before_cache:
 - chmod -R a+r $HOME/.cargo

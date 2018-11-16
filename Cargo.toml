@@ -19,7 +19,7 @@ magick_rust_6 = { version = "0.6", git = "https://github.com/gourlaysama/magick-
 magick_rust = { version = "0.10", optional = true }
 
 [features]
-default = []
+default = ["cleanup"]
 cleanup = ["magick_rust"]
 cleanup-magick6 = ["magick_rust_6"]
 

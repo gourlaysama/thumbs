@@ -12,7 +12,7 @@ matrix:
 before_install:
 - sudo add-apt-repository ppa:opencpu/imdev -y
 - sudo apt-get update -y
-- sudo apt-get install libmagickwand-6-headers -y
+- sudo apt-get install -y --no-install-recommends libmagickwand-dev
 
 install:
 - rustc -Vv

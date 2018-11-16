@@ -3,9 +3,9 @@ use std::process;
 
 fn main() {
     assert!(
-        var("CARGO_FEATURE_CLEANUP").is_err() || var("CARGO_FEATURE_CLEANUP_MAGICK6").is_err(),
-        "the 'cleanup' and 'cleanup-magick6' features cannot be set at the same time: they do the
-same thing with bindings for ImageMagick 7 and 6, respectively."
+        var("CARGO_FEATURE_CLEANUP").is_err() || var("CARGO_FEATURE_CLEANUP_MAGICK7").is_err(),
+        "the 'cleanup' and 'cleanup-magick7' features cannot be set at the same time: they do the
+same thing with bindings for ImageMagick 6 and 7, respectively."
     );
 
     let is_tag = process::Command::new("git")

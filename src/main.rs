@@ -93,7 +93,7 @@ enum Command {
         /// Files whose thumbnails to find
         files: Vec<PathBuf>,
     },
-    #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+    #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
     Cleanup {
         #[structopt(short, long)]
         /// Do not actually delete anything
@@ -133,7 +133,7 @@ fn run() -> Result<bool> {
     stderrlog::new().verbosity(args.verbose + 1).init()?;
 
     match &args.cmd {
-        #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+        #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
         Command::Cleanup { dry_run, ignore } => cleanup(&args, *dry_run, &ignore),
         _ => locate_or_delete(&args),
     }
@@ -143,7 +143,7 @@ fn locate_or_delete(args: &Cli) -> Result<bool> {
     let (files, dry_run): (&[PathBuf], bool) = match &args.cmd {
         Command::Delete { files, dry_run } => (files, *dry_run),
         Command::Locate { files } => (files, false),
-        #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+        #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
         _ => panic!("Unreachable code; this is a bug."),
     };
 
@@ -275,7 +275,7 @@ fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
                 Command::Locate { .. } => {
                     println!("{}", thumb.to_string_lossy());
                 }
-                #[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+                #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
                 Command::Cleanup { .. } => {}
             };
         } else {
@@ -293,12 +293,12 @@ fn handle_file(path: &Path, args: &Cli, locations: &[PathBuf]) -> Result<u32> {
     Ok(nb_thumbs)
 }
 
-#[cfg(feature = "cleanup")]
+#[cfg(feature = "cleanup-magick7")]
 use magick_rust::{magick_wand_genesis, magick_wand_terminus, MagickWand};
-#[cfg(feature = "cleanup-magick6")]
+#[cfg(feature = "cleanup")]
 use magick_rust_6::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 
-#[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+#[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
 fn cleanup(args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<bool> {
     magick_wand_genesis();
 
@@ -355,7 +355,7 @@ fn cleanup(args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<bool> {
     Ok(dry_run || nb_thumbs != 0)
 }
 
-#[cfg(any(feature = "cleanup", feature = "cleanup-magick6"))]
+#[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
 fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<u32> {
     trace!("Processing {:?}", path);
     let mut nb_thumbs = 0;

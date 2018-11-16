@@ -58,12 +58,21 @@ cargo build --release
 thumbs 0.2.0-pre-e503129
 ```
 
-The (enabled-by-default) `cleanup` feature requires ImageMagick 7. You can optionally build with ImageMagick 6 using:
+thumbs requires (by default) ImageMagick 6.9. You can build with ImageMagick 7 instead using:
 ```sh
-cargo build --no-default-features --features cleanup-magick6 --release
+cargo build --no-default-features --features cleanup-magick7 --release
 ```
 
-Or disable it entirely:
+ - ImageMagick 6:
+   - Ubuntu 18.04+: `imagemagick-6.q16`, and `libmagickwand-6-headers` for building
+   - Debian Stretch+: `imagemagick-6.q16`, and `libmagickwand-6-headers` for building
+   - Fedora 27+: `ImageMagick`, and `ImageMagick-devel` for building
+   - Archlinux: `imagemagick6` in Extra
+   
+ - ImageMagick 7:
+   - Archlinux: `imagemagick` in Extra
+
+Or you can disable the cleanup feature entirely:
 ```sh
 cargo build --no-default-features --release
 ```

@@ -9,6 +9,11 @@ matrix:
   - rust: nightly
   fast_finish: true
 
+before_install:
+- sudo add-apt-repository ppa:opencpu/imdev -y
+- sudo apt-get update -y
+- sudo apt-get install libmagickwand-6-headers -y
+
 install:
 - rustc -Vv
 - cargo -V

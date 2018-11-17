@@ -30,7 +30,8 @@ $ cp `thumbs locate MyMovie.mkv | head -1` MyMovie_thumbnail.png
  - Deleting thumbnails for files that don't exist (on `master` only):
 
  ```sh
-$ thumbs cleanup --dry-run --ignore /run/media
+# use globs to ignore files, e.g. removable media and mkv files
+$ thumbs cleanup --dry-run --ignore '/run/media/*' '*.mkv'
 Found 753 thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.
  ```
 

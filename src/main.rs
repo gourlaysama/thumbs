@@ -1,5 +1,6 @@
 use common_failures::prelude::*;
 use failure::format_err;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use lazy_static::lazy_static;
 use log::*;
 use std::fs::remove_file;
@@ -99,9 +100,9 @@ enum Command {
         /// Do not actually delete anything
         dry_run: bool,
 
-        #[structopt(short, long, parse(from_os_str))]
+        #[structopt(short, long)]
         /// Prefix paths of files to ignore
-        ignore: Vec<PathBuf>,
+        ignore: Vec<String>,
     },
 }
 
@@ -134,7 +135,14 @@ fn run() -> Result<bool> {
 
     match &args.cmd {
         #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-        Command::Cleanup { dry_run, ignore } => cleanup(&args, *dry_run, &ignore),
+        Command::Cleanup { dry_run, ignore } => {
+            let mut builder = GlobSetBuilder::new();
+            for g in ignore {
+                builder.add(Glob::new(g)?);
+            }
+            let set = builder.build()?;
+            cleanup(&args, *dry_run, &set)
+        }
         _ => locate_or_delete(&args),
     }
 }
@@ -299,7 +307,7 @@ use magick_rust::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 use magick_rust_6::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 
 #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-fn cleanup(args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<bool> {
+fn cleanup(args: &Cli, dry_run: bool, ignore: &GlobSet) -> Result<bool> {
     magick_wand_genesis();
 
     let locations = find_cache_location(false)?;
@@ -308,9 +316,7 @@ fn cleanup(args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<bool> {
         for entry in WalkDir::new(location)
             .min_depth(1)
             .into_iter()
-            .filter_entry(|e| {
-                args.all || !file_is_hidden(e) || !ignore.iter().any(|p| e.path().starts_with(p))
-            })
+            .filter_entry(|e| args.all || !file_is_hidden(e))
             .filter_map(|e| e.ok())
             .filter(|e| {
                 !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
@@ -356,7 +362,7 @@ fn cleanup(args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<bool> {
 }
 
 #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &[PathBuf]) -> Result<u32> {
+fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &GlobSet) -> Result<u32> {
     trace!("Processing {:?}", path);
     let mut nb_thumbs = 0;
     let origin = {
@@ -371,7 +377,7 @@ fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &[PathBuf]) -
     let origin_url = Url::parse(&origin).map_err(|s| format_err!("{}", s))?;
     if origin_url.scheme() == "file" {
         let origin_path = origin_url.to_file_path().unwrap();
-        if !ignore.iter().any(|p| origin_path.starts_with(p)) && !origin_path.exists() {
+        if !ignore.is_match(&origin_path) && !origin_path.exists() {
             nb_thumbs += 1;
             if dry_run {
                 if !args.quiet {

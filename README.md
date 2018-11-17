@@ -32,7 +32,7 @@ $ cp `thumbs locate MyMovie.mkv | head -1` MyMovie_thumbnail.png
  ```sh
 # use globs to include or exclude files, e.g. no removable media or mkv files
 $ thumbs cleanup -g '!/run/media/*' '!*.mkv'
-Found 753 thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-f/--force' to delete them.
+Found 753 thumbnail(s) to delete. Use '-v/--verbose' for details, or add '-f/--force' to delete them.
  ```
 
  - TODO:

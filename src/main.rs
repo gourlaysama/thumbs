@@ -1,6 +1,6 @@
 use common_failures::prelude::*;
 use failure::format_err;
-use globset::{Glob, GlobSet, GlobSetBuilder};
+use globset::{Candidate, Glob, GlobSet, GlobSetBuilder};
 use lazy_static::lazy_static;
 use log::*;
 use std::fs::remove_file;
@@ -101,8 +101,10 @@ enum Command {
         dry_run: bool,
 
         #[structopt(short, long)]
-        /// Prefix paths of files to ignore
-        ignore: Vec<String>,
+        /// Include or exclude files and directories that match the given globs. Can be used
+        /// multiple times. Globbing rules match .gitignore globs. Precede a glob with a !
+        /// to exclude it.
+        glob: Vec<String>,
     },
 }
 
@@ -135,13 +137,24 @@ fn run() -> Result<bool> {
 
     match &args.cmd {
         #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-        Command::Cleanup { dry_run, ignore } => {
-            let mut builder = GlobSetBuilder::new();
-            for g in ignore {
-                builder.add(Glob::new(g)?);
+        Command::Cleanup { dry_run, glob } => {
+            let mut builder_exclude = GlobSetBuilder::new();
+            let mut builder_include = GlobSetBuilder::new();
+            let mut include_all = true;
+            for g in glob {
+                if g.starts_with('!') {
+                    builder_exclude.add(Glob::new(&g[1..])?);
+                } else {
+                    include_all = false;
+                    builder_include.add(Glob::new(g)?);
+                }
             }
-            let set = builder.build()?;
-            cleanup(&args, *dry_run, &set)
+            if include_all {
+                builder_include.add(Glob::new("**")?);
+            }
+            let set_exclude = builder_exclude.build()?;
+            let set_include = builder_include.build()?;
+            cleanup(&args, *dry_run, &set_exclude, &set_include)
         }
         _ => locate_or_delete(&args),
     }
@@ -307,7 +320,7 @@ use magick_rust::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 use magick_rust_6::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 
 #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-fn cleanup(args: &Cli, dry_run: bool, ignore: &GlobSet) -> Result<bool> {
+fn cleanup(args: &Cli, dry_run: bool, exclude: &GlobSet, include: &GlobSet) -> Result<bool> {
     magick_wand_genesis();
 
     let locations = find_cache_location(false)?;
@@ -321,7 +334,7 @@ fn cleanup(args: &Cli, dry_run: bool, ignore: &GlobSet) -> Result<bool> {
             .filter(|e| {
                 !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
             }) {
-            nb_thumbs += match clean_thumbnail(entry.path(), &args, dry_run, &ignore) {
+            nb_thumbs += match clean_thumbnail(entry.path(), &args, dry_run, &exclude, &include) {
                 Ok(nb) => nb,
                 Err(e) => {
                     if log_enabled!(log::Level::Trace) {
@@ -362,7 +375,13 @@ fn cleanup(args: &Cli, dry_run: bool, ignore: &GlobSet) -> Result<bool> {
 }
 
 #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &GlobSet) -> Result<u32> {
+fn clean_thumbnail(
+    path: &Path,
+    args: &Cli,
+    dry_run: bool,
+    exclude: &GlobSet,
+    include: &GlobSet,
+) -> Result<u32> {
     trace!("Processing {:?}", path);
     let mut nb_thumbs = 0;
     let origin = {
@@ -377,7 +396,11 @@ fn clean_thumbnail(path: &Path, args: &Cli, dry_run: bool, ignore: &GlobSet) -> 
     let origin_url = Url::parse(&origin).map_err(|s| format_err!("{}", s))?;
     if origin_url.scheme() == "file" {
         let origin_path = origin_url.to_file_path().unwrap();
-        if !ignore.is_match(&origin_path) && !origin_path.exists() {
+        let glob_candidate = Candidate::new(&origin_path);
+        if !exclude.is_match_candidate(&glob_candidate)
+            && include.is_match_candidate(&glob_candidate)
+            && !origin_path.exists()
+        {
             nb_thumbs += 1;
             if dry_run {
                 if !args.quiet {

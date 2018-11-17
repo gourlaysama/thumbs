@@ -95,10 +95,11 @@ enum Command {
         files: Vec<PathBuf>,
     },
     #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
+    /// Find thumbnails for files that no longer exist
     Cleanup {
         #[structopt(short, long)]
-        /// Do not actually delete anything
-        dry_run: bool,
+        /// Actually delete thumbnails
+        force: bool,
 
         #[structopt(short, long)]
         /// Include or exclude files and directories that match the given globs. Can be used
@@ -137,7 +138,7 @@ fn run() -> Result<bool> {
 
     match &args.cmd {
         #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-        Command::Cleanup { dry_run, glob } => {
+        Command::Cleanup { force, glob } => {
             let mut builder_exclude = GlobSetBuilder::new();
             let mut builder_include = GlobSetBuilder::new();
             let mut include_all = true;
@@ -154,7 +155,7 @@ fn run() -> Result<bool> {
             }
             let set_exclude = builder_exclude.build()?;
             let set_include = builder_include.build()?;
-            cleanup(&args, *dry_run, &set_exclude, &set_include)
+            cleanup(&args, *force, &set_exclude, &set_include)
         }
         _ => locate_or_delete(&args),
     }
@@ -320,7 +321,7 @@ use magick_rust::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 use magick_rust_6::{magick_wand_genesis, magick_wand_terminus, MagickWand};
 
 #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-fn cleanup(args: &Cli, dry_run: bool, exclude: &GlobSet, include: &GlobSet) -> Result<bool> {
+fn cleanup(args: &Cli, force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<bool> {
     magick_wand_genesis();
 
     let locations = find_cache_location(false)?;
@@ -334,7 +335,7 @@ fn cleanup(args: &Cli, dry_run: bool, exclude: &GlobSet, include: &GlobSet) -> R
             .filter(|e| {
                 !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
             }) {
-            nb_thumbs += match clean_thumbnail(entry.path(), &args, dry_run, &exclude, &include) {
+            nb_thumbs += match clean_thumbnail(entry.path(), &args, force, &exclude, &include) {
                 Ok(nb) => nb,
                 Err(e) => {
                     if log_enabled!(log::Level::Trace) {
@@ -361,9 +362,9 @@ fn cleanup(args: &Cli, dry_run: bool, exclude: &GlobSet, include: &GlobSet) -> R
     if !args.quiet {
         if nb_thumbs == 0 {
             warn!("Found no thumbnails to cleanup. Rerun with '-vv/--verbose 2' for detailed information.")
-        } else if dry_run {
+        } else if !force {
             println!(
-                "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.",
+                "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or add '-f/--force' to delete them.",
                 nb_thumbs
             );
         } else {
@@ -371,14 +372,14 @@ fn cleanup(args: &Cli, dry_run: bool, exclude: &GlobSet, include: &GlobSet) -> R
         }
     }
 
-    Ok(dry_run || nb_thumbs != 0)
+    Ok(!force || nb_thumbs != 0)
 }
 
 #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
 fn clean_thumbnail(
     path: &Path,
     args: &Cli,
-    dry_run: bool,
+    force: bool,
     exclude: &GlobSet,
     include: &GlobSet,
 ) -> Result<u32> {
@@ -402,7 +403,7 @@ fn clean_thumbnail(
             && !origin_path.exists()
         {
             nb_thumbs += 1;
-            if dry_run {
+            if !force {
                 if !args.quiet {
                     info!(
                         "Would delete a thumbnail for {}",

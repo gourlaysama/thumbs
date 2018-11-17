@@ -66,8 +66,8 @@ cargo build --no-default-features --features cleanup-magick7 --release
 ```
 
  - ImageMagick 6:
-   - Ubuntu 18.04+: `imagemagick-6.q16`, and `libmagickwand-6-headers` for building
-   - Debian Stretch+: `imagemagick-6.q16`, and `libmagickwand-6-headers` for building
+   - Ubuntu 18.04+: `imagemagick-6.q16`, and `libmagickwand-dev` for building
+   - Debian Stretch+: `imagemagick-6.q16`, and `libmagickwand-dev` for building
    - Fedora 27+: `ImageMagick`, and `ImageMagick-devel` for building
    - Archlinux: `imagemagick6` in Extra
    

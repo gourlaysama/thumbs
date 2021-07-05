@@ -5,27 +5,25 @@ authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2018"
 
 [dependencies]
-structopt = "0.2"
-common_failures = "0.1"
-failure = "0.1"
-url = "1.7"
-md5 = "0.6"
+structopt = "0.3"
+anyhow = "1"
+url = "2"
+md5 = "0.7"
 log = "0.4"
-stderrlog = "0.4"
-dirs = "1.0"
+env_logger = "0.8"
+dirs = "3"
 walkdir = "2.2"
-lazy_static = "1.2"
-globset = "0.3"
+globset = "0.4"
 magick_rust_6 = { version = "0.6", git = "https://github.com/gourlaysama/magick-rust", tag = "0.6.6-patched", optional = true }
-magick_rust = { version = "0.10", optional = true }
+magick_rust = { version = "0.14", optional = true }
 
 [features]
-default = ["cleanup"]
+default = []
 cleanup = ["magick_rust_6"]
 cleanup-magick7 = ["magick_rust"]
 
 [build-dependencies]
-built = "0.3"
+built = "0.5"
 
 [profile.release]
 lto = true

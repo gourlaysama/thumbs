@@ -53,11 +53,11 @@ also requires Rust 2018 edition, which is currently limited to the nightly or
 beta channel of Rust. Then:
 
 ```sh
-git clone https://github.com/gourlaysama/thumbs
-cd thumbs
-cargo build --release
-./target/release/thumbs --version
-thumbs 0.2.0-pre-e503129
+$ git clone https://github.com/gourlaysama/thumbs -b v0.1.0
+$ cd thumbs
+$ cargo build --release
+$ ./target/release/thumbs --version
+thumbs 0.1.0
 ```
 
 thumbs requires (by default) ImageMagick 6.9. You can build with ImageMagick 7 instead using:

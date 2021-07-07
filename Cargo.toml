@@ -14,13 +14,7 @@ env_logger = "0.8"
 dirs = "3"
 walkdir = "2.2"
 globset = "0.4"
-magick_rust_6 = { version = "0.6", git = "https://github.com/gourlaysama/magick-rust", tag = "0.6.6-patched", optional = true }
-magick_rust = { version = "0.14", optional = true }
-
-[features]
-default = []
-cleanup = ["magick_rust_6"]
-cleanup-magick7 = ["magick_rust"]
+png_pong = "0.8"
 
 [build-dependencies]
 built = "0.5"

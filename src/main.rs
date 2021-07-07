@@ -1,7 +1,11 @@
 use anyhow::*;
 use env_logger::{Builder, Env};
+use globset::{Candidate, Glob, GlobSet, GlobSetBuilder};
 use log::*;
-use std::fs::remove_file;
+use png_pong::chunk::Chunk;
+use png_pong::Decoder;
+use std::fs::{remove_file, File};
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use structopt::StructOpt;
@@ -44,21 +48,20 @@ fn run() -> Result<bool> {
     b.format_timestamp(None);
     b.filter_level(LevelFilter::Warn); // default filter lever
     b.parse_env(Env::from(LOG_ENV_VAR)); // override with env
-                                             // override with CLI option
+                                         // override with CLI option
     if let Some(level) = args.log_level_with_default(2) {
         b.filter_level(level);
     };
     b.try_init()?;
 
     match &args.cmd {
-        #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
         Command::Cleanup { force, glob } => {
             let mut builder_exclude = GlobSetBuilder::new();
             let mut builder_include = GlobSetBuilder::new();
             let mut include_all = true;
             for g in glob {
                 if g.starts_with('!') {
-                    builder_exclude.add(Glob::new(&g[1..])?);
+                    builder_exclude.add(Glob::new(g.strip_prefix('!').unwrap())?);
                 } else {
                     include_all = false;
                     builder_include.add(Glob::new(g)?);
@@ -79,7 +82,7 @@ fn locate_or_delete(args: &ProgramOptions) -> Result<bool> {
     let (files, dry_run) = match &args.cmd {
         Command::Delete { files, dry_run } => (files, *dry_run),
         Command::Locate { files } => (files, false),
-        #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
+
         _ => panic!("Unreachable code; this is a bug."),
     };
 
@@ -113,18 +116,16 @@ fn locate_or_delete(args: &ProgramOptions) -> Result<bool> {
         }
     }
 
-    
-        if nb_thumbs == 0 {
-            warn!("Found no thumbnails. Rerun with '-vv/--verbose 2' for detailed information.")
-        } else if dry_run {
-            show!(
+    if nb_thumbs == 0 {
+        warn!("Found no thumbnails. Rerun with '-vv/--verbose 2' for detailed information.")
+    } else if dry_run {
+        show!(
                 "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.",
                 nb_thumbs
             );
-        } else if let Command::Delete { .. } = args.cmd {
-            show!("Deleted {} thumbnail(s).", nb_thumbs);
-        }
-    
+    } else if let Command::Delete { .. } = args.cmd {
+        show!("Deleted {} thumbnail(s).", nb_thumbs);
+    }
 
     if dry_run {
         Ok(true)
@@ -197,13 +198,10 @@ fn handle_file(path: &Path, args: &ProgramOptions, locations: &[PathBuf]) -> Res
             match args.cmd {
                 Command::Delete { dry_run, .. } => {
                     if dry_run {
-                        
-                            info!("Would delete a thumbnail for {}", path.to_string_lossy());
-                        
+                        info!("Would delete a thumbnail for {}", path.to_string_lossy());
                     } else {
-                        
-                            info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
-                        
+                        info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
+
                         remove_file(&thumb).with_context(|| {
                             format!("Failed to delete {}", thumb.to_string_lossy())
                         })?;
@@ -212,7 +210,7 @@ fn handle_file(path: &Path, args: &ProgramOptions, locations: &[PathBuf]) -> Res
                 Command::Locate { .. } => {
                     //show!(thumb.to_string_lossy());
                 }
-                #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
+
                 Command::Cleanup { .. } => {}
             };
         } else {
@@ -230,20 +228,12 @@ fn handle_file(path: &Path, args: &ProgramOptions, locations: &[PathBuf]) -> Res
     Ok(nb_thumbs)
 }
 
-#[cfg(feature = "cleanup-magick7")]
-use magick_rust::{magick_wand_genesis, magick_wand_terminus, MagickWand};
-#[cfg(feature = "cleanup")]
-use magick_rust_6::{magick_wand_genesis, magick_wand_terminus, MagickWand};
-
-#[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
 fn cleanup(
     args: &ProgramOptions,
     force: bool,
     exclude: &GlobSet,
     include: &GlobSet,
 ) -> Result<bool> {
-    magick_wand_genesis();
-
     let locations = find_cache_location(false)?;
     let mut nb_thumbs = 0;
     for location in locations {
@@ -256,21 +246,13 @@ fn cleanup(
                 !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
             })
         {
-            nb_thumbs += match clean_thumbnail(entry.path(), &args, force, &exclude, &include) {
+            nb_thumbs += match clean_thumbnail(entry.path(), force, &exclude, &include) {
                 Ok(nb) => nb,
                 Err(e) => {
                     if log_enabled!(log::Level::Trace) {
-                        trace!(
-                            "{} for {}",
-                            e.display_causes_and_backtrace(),
-                            entry.path().to_string_lossy()
-                        );
+                        trace!("{} for {}", e, entry.path().to_string_lossy());
                     } else {
-                        debug!(
-                            "{} for {}",
-                            e.display_causes_without_backtrace(),
-                            entry.path().to_string_lossy()
-                        );
+                        debug!("{} for {}", e, entry.path().to_string_lossy());
                     }
                     0
                 }
@@ -278,42 +260,24 @@ fn cleanup(
         }
     }
 
-    magick_wand_terminus();
-
-    if !args.quiet {
-        if nb_thumbs == 0 {
-            warn!("Found no thumbnails to cleanup. Rerun with '-vv/--verbose 2' for detailed information.")
-        } else if !force {
-            show!(
+    if nb_thumbs == 0 {
+        warn!("Found no thumbnails to cleanup. Rerun with '-vv/--verbose 2' for detailed information.")
+    } else if !force {
+        show!(
                 "Found {} thumbnail(s) to delete. Use '-v/--verbose' for details, or add '-f/--force' to delete them.",
                 nb_thumbs
             );
-        } else {
-            show!("Deleted {} thumbnail(s).", nb_thumbs);
-        }
+    } else {
+        show!("Deleted {} thumbnail(s).", nb_thumbs);
     }
 
     Ok(!force || nb_thumbs != 0)
 }
 
-#[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
-fn clean_thumbnail(
-    path: &Path,
-    args: &ProgramOptions,
-    force: bool,
-    exclude: &GlobSet,
-    include: &GlobSet,
-) -> Result<u32> {
+fn clean_thumbnail(path: &Path, force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<u32> {
     trace!("Processing {:?}", path);
     let mut nb_thumbs = 0;
-    let origin = {
-        let wand = MagickWand::new();
-        let path_str = path.to_string_lossy();
-        wand.read_image(&path_str)
-            .map_err(|s| format_err!("{}", s))?;
-        wand.get_image_property("Thumb::URI")
-            .map_err(|s| format_err!("{}", s))?
-    };
+    let origin = find_uri_for_thunbnail(path)?;
 
     let origin_url = Url::parse(&origin).map_err(|s| format_err!("{}", s))?;
     if origin_url.scheme() == "file" {
@@ -325,25 +289,50 @@ fn clean_thumbnail(
         {
             nb_thumbs += 1;
             if !force {
-                if !args.quiet {
+                if log_enabled!(log::Level::Info) {
                     info!(
                         "Would delete a thumbnail for {}",
                         origin_path.to_string_lossy()
                     );
                 }
             } else {
-                if !args.quiet {
+                if log_enabled!(log::Level::Info) {
                     info!(
                         "Deleting a thumbnail for '{}'",
                         origin_path.to_string_lossy()
                     );
                 }
-                remove_file(&path).io_write_context(path)?;
+                remove_file(&path)
+                    .with_context(|| format!("failed to delete file {}", path.to_string_lossy()))?;
             }
         }
     }
 
     Ok(nb_thumbs)
+}
+
+fn find_uri_for_thunbnail(path: &Path) -> Result<String> {
+    let reader = BufReader::new(File::open(path)?);
+    for chunk in Decoder::new(reader)?.into_chunks() {
+        match chunk {
+            Ok(c) => match c {
+                Chunk::CompressedText(text) => {
+                    if text.key == "Thumb::URI" {
+                        return Ok(text.val);
+                    }
+                }
+                Chunk::Text(text) => {
+                    if text.key == "Thumb::URI" {
+                        return Ok(text.val);
+                    }
+                }
+                _ => (),
+            },
+            Err(e) => panic!("Other Error: {:?}", e),
+        }
+    }
+
+    Err(anyhow!("failed to find origin path"))
 }
 
 #[macro_export]

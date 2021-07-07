@@ -22,10 +22,6 @@ jobs:
           - 1.52.0 # Rust MSRV
     steps:
       - uses: actions/checkout@v2
-      - name: Install native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libmagicwand-dev
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -45,10 +41,6 @@ jobs:
           - 1.52.0 # Rust MSRV
     steps:
       - uses: actions/checkout@v2
-      - name: Install native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libmagicwand-dev
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal

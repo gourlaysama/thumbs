@@ -71,7 +71,6 @@ pub enum Command {
         /// Files whose thumbnails to find
         files: Vec<PathBuf>,
     },
-    #[cfg(any(feature = "cleanup", feature = "cleanup-magick7"))]
     /// Find thumbnails for files that no longer exist
     Cleanup {
         #[structopt(short, long)]

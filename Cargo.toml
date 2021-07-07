@@ -1,6 +1,6 @@
 [package]
 name = "thumbs"
-version = "0.2.0"
+version = "0.2.0-dev"
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2018"
 
@@ -16,9 +16,5 @@ walkdir = "2.2"
 globset = "0.4"
 png_pong = "0.8"
 
-[build-dependencies]
-built = "0.5"
-
 [profile.release]
 lto = true
-panic = 'abort'

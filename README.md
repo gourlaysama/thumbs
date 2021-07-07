@@ -56,7 +56,7 @@ beta channel of Rust. Then:
 git clone https://github.com/gourlaysama/thumbs
 cd thumbs
 cargo build --release
-./target/release/thumbs -V
+./target/release/thumbs --version
 thumbs 0.2.0-pre-e503129
 ```
 

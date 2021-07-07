@@ -27,8 +27,9 @@ impl UnThumbnailer {
         })
     }
 
-    pub fn delete(&self, paths: &[PathBuf], dry_run: bool) -> Result<u32> {
+    pub fn delete(&self, paths: &[PathBuf], dry_run: bool) -> Result<(u32, u32)> {
         let mut nb_thumbs = 0;
+        let mut nb_ignore_dirs = 0;
 
         let remove_fn = |t: &Thumbnail| {
             let p = t.original.to_string_lossy();
@@ -44,48 +45,31 @@ impl UnThumbnailer {
         };
 
         for path in paths.iter() {
-            let mut walk = WalkDir::new(path).min_depth(1);
-            if self.recursive {
-                walk = walk.max_depth(1);
-            }
-            for entry in walk
-                .into_iter()
-                .filter_entry(|e| self.hidden || !is_hidden_unix(e.file_name()))
-                .filter_map(|e| e.ok())
-            {
-                if entry.file_type().is_dir() {
-                    warn!(
-                        "Ignoring directory {}. Enable 'recursive' to recurse into directories.",
-                        entry.file_name().to_string_lossy()
-                    )
-                } else {
-                    nb_thumbs += do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
+            if path.is_file() {
+                nb_thumbs += do_for_thumbnail(path, &self.cache_locs, remove_fn)?;
+            } else {
+                let mut walk = WalkDir::new(path).min_depth(1);
+                if !self.recursive {
+                    walk = walk.max_depth(1);
+                }
+                for entry in walk
+                    .into_iter()
+                    .filter_entry(|e| self.hidden || !is_hidden_unix(e.file_name()))
+                    .filter_map(|e| e.ok())
+                {
+                    trace!("entry: {:?}", entry);
+                    if entry.file_type().is_dir() {
+                        if !self.recursive {
+                            nb_ignore_dirs += 1;
+                        }
+                    } else {
+                        nb_thumbs += do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
+                    }
                 }
             }
-            // if self.recursive {
-            //     for entry in walk.into_iter()
-            //         .filter_entry(|e| self.hidden || !is_hidden_unix(e.file_name()) )
-            //         .filter_map(|e| e.ok())
-            //         .filter(|e| !e.file_type().is_dir())
-            //     {
-            //         nb_thumbs += do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
-            //     }
-            // } else if path.is_dir() {
-            //     debug!(
-            //         "Ignoring directory {}.",
-            //         path.to_string_lossy()
-            //     );
-            // } else if self.hidden
-            //     || !path
-            //         .file_name()
-            //         .map(|s| is_hidden_unix(s))
-            //         .unwrap_or(false)
-            // {
-            //     nb_thumbs += do_for_thumbnail(path, &self.cache_locs, remove_fn)?;
-            // }
         }
 
-        Ok(nb_thumbs)
+        Ok((nb_thumbs, nb_ignore_dirs))
     }
 
     pub fn locate(&self, path: &Path) -> Result<Vec<PathBuf>> {

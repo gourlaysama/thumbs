@@ -83,7 +83,13 @@ fn run() -> Result<bool> {
             Ok(nb_thumbs != 0)
         }
         Command::Delete { dry_run, files } => {
-            let nb_thumbs = un.delete(&files, *dry_run)?;
+            let (nb_thumbs, nb_ignore_dirs) = un.delete(&files, *dry_run)?;
+            if nb_ignore_dirs != 0 {
+                warn!(
+                    "Ignoring {} folder(s). Enable '-r/--recursive' to recurse into directories.",
+                    nb_ignore_dirs
+                )
+            }
             if nb_thumbs == 0 {
                 warn!("Found no thumbnails. Rerun with '-vv' for detailed information.")
             } else if *dry_run {

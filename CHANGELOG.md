@@ -3,6 +3,9 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Fixed
+
+* The `locate` command did not print the located path when run without `-vv`.
 
 ## [0.2.0] - 2021-07-07
 

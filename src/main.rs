@@ -208,7 +208,7 @@ fn handle_file(path: &Path, args: &ProgramOptions, locations: &[PathBuf]) -> Res
                     }
                 }
                 Command::Locate { .. } => {
-                    //show!(thumb.to_string_lossy());
+                    show!("{}", thumb.to_string_lossy());
                 }
 
                 Command::Cleanup { .. } => {}

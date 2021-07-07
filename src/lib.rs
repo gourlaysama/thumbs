@@ -27,7 +27,10 @@ impl UnThumbnailer {
         })
     }
 
-    pub fn delete(&self, paths: &[PathBuf], dry_run: bool) -> Result<(u32, u32)> {
+    /// Delete thumbnails for the files at `paths`, possibly recursing in directories
+    /// if enabled. `dry_run` only reports results but doesn't actually delete
+    /// anything.
+    pub fn delete(&self, paths: &[PathBuf], dry_run: bool) -> Result<DeleteResults> {
         let mut nb_thumbs = 0;
         let mut nb_ignore_dirs = 0;
 
@@ -69,9 +72,17 @@ impl UnThumbnailer {
             }
         }
 
-        Ok((nb_thumbs, nb_ignore_dirs))
+        Ok(DeleteResults {
+            thumbnail_count: nb_thumbs,
+            ignored_directories: nb_ignore_dirs
+        })
     }
 
+    /// Locate the thumbnails for a path.
+    ///
+    /// The path has to point to a file. Multiple results can be returned because
+    /// multiple thumbnails with different sizes can be returned for the same
+    /// source.
     pub fn locate(&self, path: &Path) -> Result<Vec<PathBuf>> {
         let mut thumb_path = Vec::new();
 
@@ -85,6 +96,12 @@ impl UnThumbnailer {
         Ok(thumb_path)
     }
 
+    /// Delete thumbnails for files that don't exist.
+    ///
+    /// The `exclude` and `include` globs constrain the search to thumbnails whose original
+    /// files match them.
+    ///
+    /// Returns the number of matching thumbnails.
     pub fn cleanup(&self, force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<u32> {
         let mut nb_thumbs = 0;
         for location in &self.cache_locs {
@@ -113,6 +130,11 @@ impl UnThumbnailer {
 
         Ok(nb_thumbs)
     }
+}
+
+pub struct DeleteResults {
+    pub thumbnail_count: u32,
+    pub ignored_directories: u32,
 }
 
 struct Thumbnail<'a> {

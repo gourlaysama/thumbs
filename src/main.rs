@@ -83,25 +83,25 @@ fn run() -> Result<bool> {
             Ok(nb_thumbs != 0)
         }
         Command::Delete { dry_run, files } => {
-            let (nb_thumbs, nb_ignore_dirs) = un.delete(&files, *dry_run)?;
-            if nb_ignore_dirs != 0 {
+            let results = un.delete(&files, *dry_run)?;
+            if results.ignored_directories != 0 {
                 warn!(
                     "Ignoring {} folder(s). Enable '-r/--recursive' to recurse into directories.",
-                    nb_ignore_dirs
+                    results.ignored_directories
                 )
             }
-            if nb_thumbs == 0 {
+            if results.thumbnail_count == 0 {
                 warn!("Found no thumbnails. Rerun with '-vv' for detailed information.")
             } else if *dry_run {
                 show!(
                         "Found {} thumbnail(s) to delete. Use '-v' for details, or remove '-d/--dry-run' to delete them.",
-                        nb_thumbs
+                        results.thumbnail_count
                     );
             } else {
-                show!("Deleted {} thumbnail(s).", nb_thumbs);
+                show!("Deleted {} thumbnail(s).", results.thumbnail_count);
             }
 
-            Ok(nb_thumbs != 0)
+            Ok(results.thumbnail_count != 0)
         }
         Command::Locate { file } => {
             let thumbs = un.locate(&file)?;

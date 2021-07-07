@@ -3,6 +3,9 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+
+## [0.2.1] - 2021-07-07
+
 ### Fixed
 
 * The `locate` command did not print the located path when run without `-vv`.
@@ -26,6 +29,7 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/gourlaysama/thumbs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gourlaysama/thumbs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/gourlaysama/thumbs/compare/01aa716...v0.1.0

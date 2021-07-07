@@ -3,6 +3,9 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+
+## [0.2.0] - 2021-07-07
+
 ### Packaging
 
 * A statically-built binary (built with musl) is now available for every release.
@@ -20,5 +23,6 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/gourlaysama/thumbs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/gourlaysama/thumbs/compare/01aa716...v0.1.0

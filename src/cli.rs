@@ -68,8 +68,8 @@ pub enum Command {
     /// Print the path of thumbnails for the given files
     Locate {
         #[structopt(parse(from_os_str))]
-        /// Files whose thumbnails to find
-        files: Vec<PathBuf>,
+        /// File whose thumbnails are to be found
+        file: PathBuf,
     },
     /// Find thumbnails for files that no longer exist
     Cleanup {

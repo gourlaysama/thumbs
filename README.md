@@ -10,6 +10,13 @@ and Gnome, and probably others.
 
 Precompiled binaries are available on the [Release Page] for x86_64 Linux (statically compiled).
 
+If you are a **Fedora** (33+) user, you can install thumbs with:
+
+```sh
+sudo dnf copr enable gourlaysama/thumbs
+sudo dnf install thumbs
+```
+
 Otherwise you will need to [build from source](#building-from-source).
 
 ## Usage

@@ -271,7 +271,9 @@ fn find_uri_for_thumbnail(path: &Path) -> Result<String> {
                 }
                 _ => (),
             },
-            Err(e) => panic!("Other Error: {:?}", e),
+            Err(e) => {
+                trace!("ignored error: {}", e);
+            },
         }
     }
 

@@ -3,6 +3,14 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Changed
+
+* Passing a directory to `delete` is now supported: the deletion applies to its content, but `--recursion/-r` is still needed to go deeper in the directory hierarchy.
+
+### Fixed
+
+* `locate` accidentally took multiple paths, like `delete`. It now only take a single path (which doesn't have to exist).
+
 
 ## [0.2.1] - 2021-07-07
 

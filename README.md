@@ -1,10 +1,12 @@
 # thumbs
 
-thumbs is a command line tool to manage the cached thumbnails for files.
+**thumbs** is a command line tool to manage the cached thumbnails for files:
+
+- it can delete the thumbnail for a file, for example to force it to be regenerated,
+- it can cleanup stale thumbnails as a whole, removing those for files that no longer exist.
 
 It supports any desktop environment that respects the
-[Freedesktop Thumbnail Managing Standard][2], so at least modern versions of KDE
-and Gnome, and probably others.
+[Freedesktop Thumbnail Managing Standard][1], so at least modern versions of KDE and Gnome, and probably others.
 
 ## Installation
 
@@ -52,7 +54,7 @@ Found 753 thumbnail(s) to delete. Use '-v/--verbose' for details, or add '-f/--f
 
 ## Building from source
 
-thumbs is written in Rust, so you need a [Rust install] to build it. girouette compiles with
+thumbs is written in Rust, so you need a [Rust install] to build it. thumbs compiles with
 Rust 1.52 or newer.
 
 ```sh
@@ -87,5 +89,5 @@ licensed as above, without any additional terms or conditions.
 </sub>
 
 [Release Page]: https://github.com/gourlaysama/thumbs/releases/latest
-[1]: https://www.rust-lang.org
-[2]: https://specifications.freedesktop.org/thumbnail-spec/latest/
+[Rust install]: https://www.rust-lang.org/tools/install
+[1]: https://specifications.freedesktop.org/thumbnail-spec/latest/

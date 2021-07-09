@@ -1,5 +1,7 @@
 # Changelog
 
+**thumbs** is a CLI tool to manage the cached thumbnails for files.
+
 <!-- next-header -->
 ## [Unreleased] - TBD
 
@@ -7,7 +9,7 @@
 
 * Passing a directory to `delete` is now supported: the deletion applies to its content, but `--recursion/-r` is still needed to go deeper in the directory hierarchy.
 
-### Fixed
+### Fixed
 
 * `locate` accidentally took multiple paths, like `delete`. It now only take a single path (which doesn't have to exist).
 

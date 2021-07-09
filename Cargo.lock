@@ -412,7 +412,7 @@ dependencies = [
 
 [[package]]
 name = "thumbs"
-version = "0.2.2"
+version = "0.3.0-dev"
 dependencies = [
  "anyhow",
  "dirs",

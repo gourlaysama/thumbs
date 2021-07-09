@@ -1,10 +1,12 @@
 # Changelog
 
 **thumbs** is a CLI tool to manage the cached thumbnails for files.
-
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Added
+
+* New `-l/--last-accessed <timestamp/duration>` option for `delete` that allows deleting only thumbnails for file that have not been accessed since that time. The argument can be either a RFC3339-like time-stamp (`2020-01-01 11:10:00`) or a free-form duration like `1year 15days 1week 2min` or `1h 6s 2ms` that is taken from the current time.
 
 ## [0.2.2] - 2021-07-09
 

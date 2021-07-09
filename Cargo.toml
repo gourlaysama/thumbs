@@ -15,6 +15,7 @@ dirs = "3"
 walkdir = "2.2"
 globset = "0.4"
 png_pong = "0.8"
+humantime = "2"
 
 [profile.release]
 lto = true

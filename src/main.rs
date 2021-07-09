@@ -82,8 +82,12 @@ fn run() -> Result<bool> {
 
             Ok(nb_thumbs != 0)
         }
-        Command::Delete { dry_run, files } => {
-            let results = un.delete(&files, *dry_run)?;
+        Command::Delete {
+            dry_run,
+            files,
+            last_accessed,
+        } => {
+            let results = un.delete(files, *dry_run, *last_accessed)?;
             if results.ignored_directories != 0 {
                 warn!(
                     "Ignoring {} folder(s). Enable '-r/--recursive' to recurse into directories.",

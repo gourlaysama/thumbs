@@ -1,6 +1,6 @@
-use std::path::PathBuf;
-
+use anyhow::*;
 use log::LevelFilter;
+use std::{path::PathBuf, time::SystemTime};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -53,7 +53,6 @@ impl ProgramOptions {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(rename_all = "kebab")]
 pub enum Command {
     /// Delete the thumbnails for the given files
     Delete {
@@ -64,6 +63,13 @@ pub enum Command {
         #[structopt(parse(from_os_str))]
         /// Files whose thumbnails to delete
         files: Vec<PathBuf>,
+
+        /// Only delete thumbnails for files that haven't been accessed since the given time.
+        ///
+        /// Can be either a RFC3339-like timestamp (`2020-01-01 11:10:00`) or a free-form
+        /// duration like `1year 15days 1week 2min` or `1h 6s 2ms`.
+        #[structopt(short, long, parse(try_from_str = parse_last_accessed))]
+        last_accessed: Option<SystemTime>,
     },
     /// Print the path of thumbnails for the given files
     Locate {
@@ -83,4 +89,19 @@ pub enum Command {
         /// to exclude it.
         glob: Vec<String>,
     },
+}
+
+fn parse_last_accessed(s: &str) -> Result<SystemTime> {
+    if let Ok(t) = humantime::parse_rfc3339_weak(s) {
+        return Ok(t);
+    }
+
+    if let Ok(d) = humantime::parse_duration(s) {
+        return Ok(SystemTime::now() - d);
+    }
+
+    bail!(
+        "Cannot parse '{}' as either a RFC3339-like timestamp or a free-form duration",
+        s
+    );
 }

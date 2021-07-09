@@ -4,9 +4,10 @@ use log::*;
 use png_pong::{chunk::Chunk, Decoder};
 use std::fs::{remove_file, File};
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 use std::{ffi::OsStr, io::BufReader, os::unix::prelude::OsStrExt};
 use url::Url;
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 
 pub mod cli;
 
@@ -30,7 +31,12 @@ impl UnThumbnailer {
     /// Delete thumbnails for the files at `paths`, possibly recursing in directories
     /// if enabled. `dry_run` only reports results but doesn't actually delete
     /// anything.
-    pub fn delete(&self, paths: &[PathBuf], dry_run: bool) -> Result<DeleteResults> {
+    pub fn delete(
+        &self,
+        paths: &[PathBuf],
+        dry_run: bool,
+        last_accessed: Option<SystemTime>,
+    ) -> Result<DeleteResults> {
         let mut nb_thumbs = 0;
         let mut nb_ignore_dirs = 0;
 
@@ -65,6 +71,27 @@ impl UnThumbnailer {
                         if !self.recursive {
                             nb_ignore_dirs += 1;
                         }
+                    } else if let Some(last_accessed) = last_accessed {
+                        fn entry_was_accessed_since(e: &DirEntry, t: SystemTime) -> Result<bool> {
+                            let acc_t = e.metadata()?.accessed()?;
+
+                            Ok(acc_t >= t)
+                        }
+
+                        match entry_was_accessed_since(&entry, last_accessed) {
+                            Ok(false) => {
+                                nb_thumbs +=
+                                    do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
+                            }
+                            Ok(true) => {}
+                            Err(e) => {
+                                debug!(
+                                    "Failed to find accesstime of {}",
+                                    entry.path().to_string_lossy()
+                                );
+                                trace!("Failed with {}", e);
+                            }
+                        }
                     } else {
                         nb_thumbs += do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
                     }
@@ -74,7 +101,7 @@ impl UnThumbnailer {
 
         Ok(DeleteResults {
             thumbnail_count: nb_thumbs,
-            ignored_directories: nb_ignore_dirs
+            ignored_directories: nb_ignore_dirs,
         })
     }
 
@@ -273,7 +300,7 @@ fn find_uri_for_thumbnail(path: &Path) -> Result<String> {
             },
             Err(e) => {
                 trace!("ignored error: {}", e);
-            },
+            }
         }
     }
 

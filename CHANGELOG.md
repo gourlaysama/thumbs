@@ -5,6 +5,9 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+
+## [0.2.2] - 2021-07-09
+
 ### Changed
 
 * Passing a directory to `delete` is now supported: the deletion applies to its content, but `--recursion/-r` is still needed to go deeper in the directory hierarchy.
@@ -39,7 +42,8 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/gourlaysama/thumbs/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gourlaysama/thumbs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gourlaysama/thumbs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/gourlaysama/thumbs/compare/01aa716...v0.1.0

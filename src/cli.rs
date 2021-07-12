@@ -57,8 +57,8 @@ pub enum Command {
     /// Delete the thumbnails for the given files
     Delete {
         #[structopt(short, long)]
-        /// Do not actually delete anything
-        dry_run: bool,
+        /// Do not prompt and actually delete thumbnails
+        force: bool,
 
         #[structopt(parse(from_os_str))]
         /// Files whose thumbnails to delete

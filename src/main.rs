@@ -1,11 +1,14 @@
 use anyhow::*;
 use env_logger::{Builder, Env};
-use globset::{Glob, GlobSetBuilder};
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use log::*;
+use std::io::Write;
+use std::path::PathBuf;
 use std::process::exit;
+use std::time::SystemTime;
 use structopt::StructOpt;
 use thumbs::cli::{Command, ProgramOptions};
-use thumbs::show;
+use thumbs::{show, Thumbnail, UnThumbnailer};
 
 const LOG_ENV_VAR: &str = "THUMBS_LOG";
 
@@ -67,54 +70,128 @@ fn run() -> Result<bool> {
             let set_exclude = builder_exclude.build()?;
             let set_include = builder_include.build()?;
 
-            let nb_thumbs = un.cleanup(*force, &set_exclude, &set_include)?;
-
-            if nb_thumbs == 0 {
-                warn!("Found no thumbnails to cleanup. Rerun with '-vv' for detailed information.")
-            } else if !force {
-                show!(
-                        "Found {} thumbnail(s) to delete. Use '-v' for details, or add '-f/--force' to delete them.",
-                        nb_thumbs
-                    );
-            } else {
-                show!("Deleted {} thumbnail(s).", nb_thumbs);
-            }
-
-            Ok(nb_thumbs != 0)
+            do_cleanup(&un, *force, &set_exclude, &set_include)
         }
         Command::Delete {
-            dry_run,
+            force,
             files,
             last_accessed,
-        } => {
-            let results = un.delete(files, *dry_run, *last_accessed)?;
-            if results.ignored_directories != 0 {
-                warn!(
-                    "Ignoring {} folder(s). Enable '-r/--recursive' to recurse into directories.",
-                    results.ignored_directories
-                )
-            }
-            if results.thumbnail_count == 0 {
-                warn!("Found no thumbnails. Rerun with '-vv' for detailed information.")
-            } else if *dry_run {
-                show!(
-                        "Found {} thumbnail(s) to delete. Use '-v' for details, or remove '-d/--dry-run' to delete them.",
-                        results.thumbnail_count
-                    );
-            } else {
-                show!("Deleted {} thumbnail(s).", results.thumbnail_count);
-            }
-
-            Ok(results.thumbnail_count != 0)
-        }
+        } => do_delete(&un, files, *force, *last_accessed),
         Command::Locate { file } => {
             let thumbs = un.locate(&file)?;
 
             for p in &thumbs {
-                show!("{}", p.to_string_lossy());
+                show!("{}", p.thumbnail.to_string_lossy());
             }
 
             Ok(!thumbs.is_empty())
         }
     }
+}
+
+fn do_cleanup(
+    un: &UnThumbnailer,
+    force: bool,
+    set_exclude: &GlobSet,
+    set_include: &GlobSet,
+) -> Result<bool> {
+    let thumbs = un.cleanup(force, &set_exclude, &set_include)?;
+    let nb_thumbs = thumbs.len();
+    if nb_thumbs == 0 {
+        warn!("Found no thumbnails to cleanup.")
+    } else if !force {
+        if atty::is(atty::Stream::Stdout) {
+            return user_prompt(&thumbs, || cached_delete(&thumbs));
+        } else {
+            show!(
+                "Found {} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them.",
+                nb_thumbs
+            );
+        }
+    } else {
+        show!("Deleted {} thumbnail(s).", nb_thumbs);
+    }
+
+    Ok(nb_thumbs != 0)
+}
+
+fn do_delete(
+    un: &UnThumbnailer,
+    files: &[PathBuf],
+    force: bool,
+    last_accessed: Option<SystemTime>,
+) -> Result<bool> {
+    let results = un.delete(files, !force, last_accessed)?;
+    let thumbnail_count = results.thumbnail_paths.len();
+
+    if results.ignored_directories != 0 {
+        warn!(
+            "Ignoring {} folder(s). Enable '-r/--recursive' to recurse into directories.",
+            results.ignored_directories
+        )
+    }
+    if thumbnail_count == 0 {
+        warn!("Found no thumbnails. Rerun with '-vv' for detailed information.")
+    } else if !force {
+        if atty::is(atty::Stream::Stdout) {
+            return user_prompt(&results.thumbnail_paths, || {
+                cached_delete(&results.thumbnail_paths)
+            });
+        } else {
+            show!(
+                "Found {} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them.",
+                thumbnail_count
+            );
+        }
+    } else {
+        show!("Deleted {} thumbnail(s).", thumbnail_count);
+    }
+
+    Ok(thumbnail_count != 0)
+}
+
+fn user_prompt<F>(thumbnails: &[Thumbnail], on_yes: F) -> Result<bool>
+where
+    F: Fn() -> Result<()>,
+{
+    loop {
+        {
+            let out = std::io::stdout();
+            let mut out = out.lock();
+            write!(
+                out,
+                "Found {} thumbnail(s) to delete.\nDelete them? y(es) / N(o) / d(etails)> ",
+                thumbnails.len()
+            )?;
+            out.flush()?;
+        }
+
+        let mut confirm = String::with_capacity(1);
+        std::io::stdin().read_line(&mut confirm)?;
+        trace!("read user input: {:?}", confirm);
+
+        if confirm.eq_ignore_ascii_case("y\n") {
+            on_yes()?;
+            return Ok(!thumbnails.is_empty());
+        } else if confirm.eq_ignore_ascii_case("d\n") {
+            let out = std::io::stdout();
+            let mut out = out.lock();
+            writeln!(out, "Found thumbnails for:")?;
+            for p in thumbnails {
+                writeln!(out, "{}", p.file.to_string_lossy())?;
+            }
+            out.flush()?;
+        } else {
+            return Ok(!thumbnails.is_empty());
+        }
+    }
+}
+
+fn cached_delete(thumbnails: &[Thumbnail]) -> Result<()> {
+    for p in thumbnails {
+        std::fs::remove_file(&p.thumbnail)?;
+    }
+
+    show!("Deleted {} thumbnail(s).", thumbnails.len());
+    Ok(())
 }

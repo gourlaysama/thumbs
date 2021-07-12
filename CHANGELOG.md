@@ -4,9 +4,17 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
-### Added
+### Packaging
+
+### Changes
+
+### Features
 
 * New `-l/--last-accessed <timestamp/duration>` option for `delete` that allows deleting only thumbnails for file that have not been accessed since that time. The argument can be either a RFC3339-like time-stamp (`2020-01-01 11:10:00`) or a free-form duration like `1year 15days 1week 2min` or `1h 6s 2ms` that is taken from the current time.
+
+### Fixes
+
+### Other
 
 ## [0.2.2] - 2021-07-09
 
@@ -17,7 +25,6 @@
 ### Fixed
 
 * `locate` accidentally took multiple paths, like `delete`. It now only take a single path (which doesn't have to exist).
-
 
 ## [0.2.1] - 2021-07-07
 

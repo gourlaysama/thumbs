@@ -37,25 +37,14 @@ impl UnThumbnailer {
         dry_run: bool,
         last_accessed: Option<SystemTime>,
     ) -> Result<DeleteResults> {
-        let mut nb_thumbs = 0;
+        let mut thumbs = Vec::new();
         let mut nb_ignore_dirs = 0;
 
-        let remove_fn = |t: &Thumbnail| {
-            let p = t.original.to_string_lossy();
-            if dry_run {
-                info!("Would delete a thumbnail for {}", p);
-                Ok(())
-            } else {
-                info!("Deleting a thumbnail for '{}'", p);
-
-                remove_file(&t.thumbnail)
-                    .with_context(|| format!("Failed to delete {}", t.thumbnail.to_string_lossy()))
-            }
-        };
+        let mode = if dry_run { Mode::DryRun } else { Mode::Delete };
 
         for path in paths.iter() {
             if path.is_file() {
-                nb_thumbs += do_for_thumbnail(path, &self.cache_locs, remove_fn)?;
+                do_for_thumbnail(path, &self.cache_locs, &mut thumbs, mode)?;
             } else {
                 let mut walk = WalkDir::new(path).min_depth(1);
                 if !self.recursive {
@@ -80,8 +69,12 @@ impl UnThumbnailer {
 
                         match entry_was_accessed_since(&entry, last_accessed) {
                             Ok(false) => {
-                                nb_thumbs +=
-                                    do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
+                                do_for_thumbnail(
+                                    entry.path(),
+                                    &self.cache_locs,
+                                    &mut thumbs,
+                                    mode,
+                                )?;
                             }
                             Ok(true) => {}
                             Err(e) => {
@@ -93,14 +86,14 @@ impl UnThumbnailer {
                             }
                         }
                     } else {
-                        nb_thumbs += do_for_thumbnail(entry.path(), &self.cache_locs, remove_fn)?;
+                        do_for_thumbnail(entry.path(), &self.cache_locs, &mut thumbs, mode)?;
                     }
                 }
             }
         }
 
         Ok(DeleteResults {
-            thumbnail_count: nb_thumbs,
+            thumbnail_paths: thumbs,
             ignored_directories: nb_ignore_dirs,
         })
     }
@@ -110,17 +103,12 @@ impl UnThumbnailer {
     /// The path has to point to a file. Multiple results can be returned because
     /// multiple thumbnails with different sizes can be returned for the same
     /// source.
-    pub fn locate(&self, path: &Path) -> Result<Vec<PathBuf>> {
-        let mut thumb_path = Vec::new();
+    pub fn locate(&self, path: &Path) -> Result<Vec<Thumbnail>> {
+        let mut thumbs = Vec::new();
 
-        let locate_fn = |t: &Thumbnail| {
-            thumb_path.push(t.thumbnail.to_path_buf());
-            Ok(())
-        };
+        do_for_thumbnail(path, &self.cache_locs, &mut thumbs, Mode::Locate)?;
 
-        do_for_thumbnail(path, &self.cache_locs, locate_fn)?;
-
-        Ok(thumb_path)
+        Ok(thumbs)
     }
 
     /// Delete thumbnails for files that don't exist.
@@ -129,8 +117,13 @@ impl UnThumbnailer {
     /// files match them.
     ///
     /// Returns the number of matching thumbnails.
-    pub fn cleanup(&self, force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<u32> {
-        let mut nb_thumbs = 0;
+    pub fn cleanup(
+        &self,
+        force: bool,
+        exclude: &GlobSet,
+        include: &GlobSet,
+    ) -> Result<Vec<Thumbnail>> {
+        let mut thumbs = Vec::new();
         for location in &self.cache_locs {
             for entry in WalkDir::new(location)
                 .min_depth(1)
@@ -141,40 +134,48 @@ impl UnThumbnailer {
                     !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
                 })
             {
-                nb_thumbs += match clean_thumbnail(entry.path(), force, &exclude, &include) {
-                    Ok(nb) => nb,
+                match clean_thumbnail(entry.path(), force, &exclude, &include, &mut thumbs) {
+                    Ok(_) => {}
                     Err(e) => {
                         if log_enabled!(log::Level::Trace) {
                             trace!("{} for {}", e, entry.path().to_string_lossy());
                         } else {
                             debug!("{} for {}", e, entry.path().to_string_lossy());
                         }
-                        0
                     }
                 };
             }
         }
 
-        Ok(nb_thumbs)
+        Ok(thumbs)
     }
 }
 
+#[derive(Debug)]
 pub struct DeleteResults {
-    pub thumbnail_count: u32,
+    pub thumbnail_paths: Vec<Thumbnail>,
     pub ignored_directories: u32,
 }
 
-struct Thumbnail<'a> {
-    thumbnail: &'a Path,
-    original: &'a Path,
+#[derive(Debug, Clone)]
+pub struct Thumbnail {
+    pub thumbnail: PathBuf,
+    pub file: PathBuf,
 }
 
-fn do_for_thumbnail<F>(path: &Path, locations: &[PathBuf; 2], mut f: F) -> Result<u32>
-where
-    F: FnMut(&Thumbnail) -> Result<()>,
-{
-    let mut nb_thumbs = 0;
+#[derive(Copy, Clone)]
+enum Mode {
+    Locate,
+    DryRun,
+    Delete,
+}
 
+fn do_for_thumbnail(
+    path: &Path,
+    locations: &[PathBuf; 2],
+    acc_paths: &mut Vec<Thumbnail>,
+    mode: Mode,
+) -> Result<()> {
     // TODO is canonicalize too much? (it resolves symlinks)
     let url = if !path.is_absolute() {
         Url::from_file_path(&path.canonicalize()?)
@@ -197,12 +198,23 @@ where
         if thumb.exists() {
             debug!("  Found      {:?}", thumb);
             thumb_seen = true;
-            nb_thumbs += 1;
+            match mode {
+                Mode::Locate => {}
+                Mode::DryRun => {
+                    info!("Would delete a thumbnail for {}", path.to_string_lossy());
+                }
+                Mode::Delete => {
+                    info!("Deleting a thumbnail for '{}'", path.to_string_lossy());
+
+                    remove_file(&thumb)
+                        .with_context(|| format!("Failed to delete {}", thumb.to_string_lossy()))?;
+                }
+            }
             let th = Thumbnail {
-                thumbnail: &thumb,
-                original: &path,
+                thumbnail: thumb,
+                file: path.to_path_buf(),
             };
-            f(&th)?;
+            acc_paths.push(th);
         } else {
             debug!("  Not found  {:?}", thumb);
         }
@@ -215,7 +227,7 @@ where
         );
     }
 
-    Ok(nb_thumbs)
+    Ok(())
 }
 
 fn is_hidden_unix(str: &OsStr) -> bool {
@@ -239,9 +251,14 @@ fn find_cache_locations() -> Result<[PathBuf; 2]> {
     Ok(locations)
 }
 
-fn clean_thumbnail(path: &Path, force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<u32> {
+fn clean_thumbnail(
+    path: &Path,
+    force: bool,
+    exclude: &GlobSet,
+    include: &GlobSet,
+    acc_paths: &mut Vec<Thumbnail>,
+) -> Result<()> {
     trace!("Processing {:?}", path);
-    let mut nb_thumbs = 0;
     let origin = find_uri_for_thumbnail(path)?;
 
     let origin_url = Url::parse(&origin).map_err(|s| format_err!("{}", s))?;
@@ -252,7 +269,6 @@ fn clean_thumbnail(path: &Path, force: bool, exclude: &GlobSet, include: &GlobSe
             && include.is_match_candidate(&glob_candidate)
             && !origin_path.exists()
         {
-            nb_thumbs += 1;
             if !force {
                 if log_enabled!(log::Level::Info) {
                     info!(
@@ -270,6 +286,11 @@ fn clean_thumbnail(path: &Path, force: bool, exclude: &GlobSet, include: &GlobSe
                 remove_file(&path)
                     .with_context(|| format!("failed to delete file {}", path.to_string_lossy()))?;
             }
+            let th = Thumbnail {
+                thumbnail: path.to_path_buf(),
+                file: origin_path,
+            };
+            acc_paths.push(th);
         }
     } else {
         trace!(
@@ -278,7 +299,7 @@ fn clean_thumbnail(path: &Path, force: bool, exclude: &GlobSet, include: &GlobSe
         );
     }
 
-    Ok(nb_thumbs)
+    Ok(())
 }
 
 fn find_uri_for_thumbnail(path: &Path) -> Result<String> {

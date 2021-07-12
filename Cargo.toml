@@ -12,10 +12,11 @@ md5 = "0.7"
 log = "0.4"
 env_logger = "0.8"
 dirs = "3"
-walkdir = "2.2"
+walkdir = "2"
 globset = "0.4"
 png_pong = "0.8"
 humantime = "2"
+atty = "0.2"
 
 [profile.release]
 lto = true

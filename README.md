@@ -12,7 +12,7 @@ It supports any desktop environment that respects the
 
 Precompiled binaries are available on the [Release Page] for x86_64 Linux (statically compiled).
 
-If you are a **Fedora** (33+) user, you can install thumbs with:
+If you are a **Fedora** (33+, x86_64/aarch64/armhfp) user, you can install thumbs with:
 
 ```sh
 sudo dnf copr enable gourlaysama/thumbs
@@ -26,11 +26,23 @@ Otherwise you will need to [build from source](#building-from-source).
 - Deleting thumbnails:
 
 ```sh
-$ thumbs delete MyMovie.mkv MyImage.png
+$ thumbs delete --force MyMovie.mkv MyImage.png
 Deleted 2 thumbnail(s).
 
-$ thumbs delete --dry-run --recursive ~/Videos/
-Found 316 thumbnail(s) to delete. Use '-v/--verbose' for details, or remove '-d/--dry-run' to delete them.
+$ thumbs delete --recursive ~/Videos/
+Found 316 thumbnail(s) to delete.
+Delete them? y(es) / N(o) / d(etails)> y
+Deleted 75 thumbnails(s).
+
+$ thumbs delete -r ~/Pictures --last-accessed '1 month'
+Found 2 thumbnails(s) to delete.
+Delete them? y(es) / N(o) / d(etails)> d
+Found thumbnails for:
+/home/me/Pictures/tux.png
+/home/me/Pictures/fedora-logo.png
+Found 2 thumbnails(s) to delete.
+Delete them? y(es) / N(o) / d(etails)> y
+Deleted 2 thumbnail(s).
 
 ```
 
@@ -47,9 +59,11 @@ $ cp `thumbs locate MyMovie.mkv | head -1` MyMovie_thumbnail.png
 - Deleting thumbnails for files that don't exist:
 
  ```sh
-# use globs to include or exclude files, e.g. no removable media or mkv files
+# use globs to include or exclude paths, e.g. no removable media or mkv files
 $ thumbs cleanup -g '!/run/media/*' '!*.mkv'
-Found 753 thumbnail(s) to delete. Use '-v/--verbose' for details, or add '-f/--force' to delete them.
+Found 753 thumbnail(s) to delete.
+Delete them? y(es) / N(o) / d(etails)> y
+Deleted 753 thumbnails(s).
  ```
 
 ## Building from source
@@ -68,10 +82,10 @@ thumbs 0.3.0
 ## TODO
 
 - [x] Cleanup thumbnails for files that don't exist
-- [ ] Cleanup thumbnails for files not accessed in `duration`
+- [x] Cleanup thumbnails for files not accessed in `duration`
 - [ ] Generate thumbnails for files?
 - [ ] Find out which DE this works with
-- [ ] Prompt when in a terminal instead of asking to re-run with `-f/-d`
+- [x] Prompt when in a terminal instead of asking to re-run with `-f/-d`
 
 #### License
 

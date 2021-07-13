@@ -4,10 +4,7 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
-
 ## [0.3.0] - 2021-07-13
-
-### Packaging
 
 ### Changes
 
@@ -18,10 +15,6 @@
 
 * New `-l/--last-accessed <timestamp/duration>` option for `delete`. It allows deleting only thumbnails for file that have not been accessed since that time. The argument can be either a RFC3339-like time-stamp (`2020-01-01 11:10:00`) or a free-form duration like `1year 15days 1week 2min` or `1h 6s 2ms` that is taken from the current time.
 * thumbs will now prompt for action when connected to a tty, with 3 options `y/N/d` for deletion, doing nothing, and printing the files whose thumbnails will be deleted, respectively.
-
-### Fixes
-
-### Other
 
 ## [0.2.2] - 2021-07-09
 

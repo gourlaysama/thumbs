@@ -4,6 +4,12 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.3.1] - 2021-07-13
+
+### Fixes
+
+* Fixed publishing of binaries when a version is released.
+
 ## [0.3.0] - 2021-07-13
 
 ### Changes

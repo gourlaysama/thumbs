@@ -104,4 +104,4 @@ licensed as above, without any additional terms or conditions.
 
 [Release Page]: https://github.com/gourlaysama/thumbs/releases/latest
 [Rust install]: https://www.rust-lang.org/tools/install
-[1]: https://specifications.freedesktop.org/thumbnail-spec/latest/
+[1]: https://specifications.freedesktop.org/thumbnail-spec/thumbnail-spec-latest.html

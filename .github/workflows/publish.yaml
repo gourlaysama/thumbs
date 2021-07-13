@@ -37,7 +37,7 @@ jobs:
           DIST_DIR="thumbs-$G_VERSION-x86_64-unknown-linux-musl"
           TARGET_FILE="$DIST_DIR.tar.gz"
           rm -rf "$DIST_DIR"
-          mkdir -p "$DIST_DIR/complete"
+          mkdir -p "$DIST_DIR"
           cp -p target/x86_64-unknown-linux-musl/release/thumbs "$DIST_DIR"
           cp -p README.md "$DIST_DIR"
           cp -p CHANGELOG.md "$DIST_DIR"

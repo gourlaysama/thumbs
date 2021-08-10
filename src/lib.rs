@@ -134,7 +134,7 @@ impl UnThumbnailer {
                     !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
                 })
             {
-                match clean_thumbnail(entry.path(), force, &exclude, &include, &mut thumbs) {
+                match clean_thumbnail(entry.path(), force, exclude, include, &mut thumbs) {
                     Ok(_) => {}
                     Err(e) => {
                         if log_enabled!(log::Level::Trace) {

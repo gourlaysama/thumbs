@@ -78,7 +78,7 @@ fn run() -> Result<bool> {
             last_accessed,
         } => do_delete(&un, files, *force, *last_accessed),
         Command::Locate { file } => {
-            let thumbs = un.locate(&file)?;
+            let thumbs = un.locate(file)?;
 
             for p in &thumbs {
                 show!("{}", p.thumbnail.to_string_lossy());
@@ -95,7 +95,7 @@ fn do_cleanup(
     set_exclude: &GlobSet,
     set_include: &GlobSet,
 ) -> Result<bool> {
-    let thumbs = un.cleanup(force, &set_exclude, &set_include)?;
+    let thumbs = un.cleanup(force, set_exclude, set_include)?;
     let nb_thumbs = thumbs.len();
     if nb_thumbs == 0 {
         warn!("Found no thumbnails to cleanup.")

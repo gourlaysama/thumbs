@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Changes
+
+* `--version` output now shows more build information.
+
 ## [0.3.1] - 2021-07-13
 
 ### Fixes

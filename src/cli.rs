@@ -4,8 +4,15 @@ use std::{path::PathBuf, time::SystemTime};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(about = "Utility to find and delete generated thumbnails.")]
+#[structopt(
+    about = "Utility to find and delete generated thumbnails.",
+    setting = structopt::clap::AppSettings::DisableVersion,
+)]
 pub struct ProgramOptions {
+    /// Prints version information.
+    #[structopt(short = "V", long = "version")]
+    pub version: bool,
+
     /// Pass for more log output.
     #[structopt(long, short, global = true, parse(from_occurrences))]
     verbose: i8,
@@ -29,7 +36,7 @@ pub struct ProgramOptions {
     pub all: bool,
 
     #[structopt(subcommand)]
-    pub cmd: Command,
+    pub cmd: Option<Command>,
 }
 
 impl ProgramOptions {

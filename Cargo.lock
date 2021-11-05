@@ -425,6 +425,7 @@ dependencies = [
  "png_pong",
  "structopt",
  "url",
+ "version_check",
  "walkdir",
 ]
 

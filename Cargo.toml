@@ -18,5 +18,8 @@ png_pong = "0.8"
 humantime = "2"
 atty = "0.2"
 
+[build-dependencies]
+version_check = "0.9"
+
 [profile.release]
 lto = true

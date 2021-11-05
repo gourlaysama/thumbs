@@ -38,7 +38,22 @@ fn main() {
 }
 
 fn run() -> Result<bool> {
-    let args = ProgramOptions::from_args();
+    let args_matches = ProgramOptions::clap().get_matches();
+    let args = ProgramOptions::from_clap(&args_matches);
+
+    if args.version {
+        // HACK to disambiguate short/long invocations for the same cli option;
+        // there has to be a better way of doing this...
+        let i = args_matches
+            .index_of("version")
+            .ok_or_else(|| anyhow!("should never happen: version set yet no version flag"))?;
+        if std::env::args().nth(i).unwrap_or_default() == "-V" {
+            print_version(false);
+        } else {
+            print_version(true);
+        }
+        return Ok(true);
+    }
 
     let mut b = Builder::default();
     b.format_timestamp(None);
@@ -50,8 +65,15 @@ fn run() -> Result<bool> {
     };
     b.try_init()?;
 
+    let cmd = if let Some(cmd) = &args.cmd {
+        cmd
+    } else {
+        ProgramOptions::clap().print_help()?;
+        std::process::exit(1);
+    };
+
     let un = thumbs::UnThumbnailer::new(args.recursive, args.all)?;
-    match &args.cmd {
+    match cmd {
         Command::Cleanup { force, glob } => {
             let mut builder_exclude = GlobSetBuilder::new();
             let mut builder_include = GlobSetBuilder::new();
@@ -194,4 +216,18 @@ fn cached_delete(thumbnails: &[Thumbnail]) -> Result<()> {
 
     show!("Deleted {} thumbnail(s).", thumbnails.len());
     Ok(())
+}
+
+fn print_version(long: bool) {
+    if long {
+        println!(
+            "{} {} ({})",
+            env!("CARGO_PKG_NAME"),
+            env!("CARGO_PKG_VERSION"),
+            option_env!("BUILD_ID").unwrap_or("unknown")
+        );
+        println!("rustc {} ({})", env!("BUILD_RUSTC"), env!("BUILD_INFO"));
+    } else {
+        println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    }
 }

@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{anyhow, Result};
 use env_logger::{Builder, Env};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use log::*;

@@ -1,41 +1,46 @@
 use anyhow::{bail, Result};
+use clap::ValueHint;
 use log::LevelFilter;
 use std::{path::PathBuf, time::SystemTime};
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
-#[structopt(
+#[derive(Debug, clap::Parser)]
+#[clap(
     about = "Utility to find and delete generated thumbnails.",
-    setting = structopt::clap::AppSettings::DisableVersion,
+    setting = clap::AppSettings::NoAutoVersion,
+    mut_arg("help", |h| h.help_heading("INFO")),
+    mut_arg("version", |h| h.help_heading("INFO")),
 )]
 pub struct ProgramOptions {
-    /// Prints version information.
-    #[structopt(short = "V", long = "version")]
-    pub version: bool,
-
     /// Pass for more log output.
-    #[structopt(long, short, global = true, parse(from_occurrences))]
-    verbose: i8,
-
-    /// Pass for less log output.
-    #[structopt(
+    #[clap(
         long,
         short,
         global = true,
         parse(from_occurrences),
-        conflicts_with = "verbose"
+        help_heading = "FLAGS"
+    )]
+    verbose: i8,
+
+    /// Pass for less log output.
+    #[clap(
+        long,
+        short,
+        global = true,
+        parse(from_occurrences),
+        conflicts_with = "verbose",
+        help_heading = "FLAGS"
     )]
     quiet: i8,
 
-    #[structopt(short, long, global = true)]
+    #[clap(short, long, help_heading = "FLAGS", global = true)]
     /// Recurse through directories
     pub recursive: bool,
 
-    #[structopt(short, long, global = true)]
+    #[clap(short, long, help_heading = "FLAGS", global = true)]
     /// Include hidden files and directories
     pub all: bool,
 
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub cmd: Option<Command>,
 }
 
@@ -59,15 +64,16 @@ impl ProgramOptions {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, clap::Parser)]
 pub enum Command {
     /// Delete the thumbnails for the given files
+    #[clap(setting = clap::AppSettings::NoAutoVersion)]
     Delete {
-        #[structopt(short, long)]
+        #[clap(short, long, help_heading = "FLAGS")]
         /// Do not prompt and actually delete thumbnails
         force: bool,
 
-        #[structopt(parse(from_os_str))]
+        #[clap(parse(from_os_str), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// Files whose thumbnails to delete
         files: Vec<PathBuf>,
 
@@ -75,22 +81,24 @@ pub enum Command {
         ///
         /// Can be either a RFC3339-like timestamp (`2020-01-01 11:10:00`) or a free-form
         /// duration like `1year 15days 1week 2min` or `1h 6s 2ms`.
-        #[structopt(short, long, parse(try_from_str = parse_last_accessed))]
+        #[clap(short, long, parse(try_from_str = parse_last_accessed))]
         last_accessed: Option<SystemTime>,
     },
     /// Print the path of thumbnails for the given files
+    #[clap(setting = clap::AppSettings::NoAutoVersion)]
     Locate {
-        #[structopt(parse(from_os_str))]
+        #[clap(parse(from_os_str), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// File whose thumbnails are to be found
         file: PathBuf,
     },
     /// Find thumbnails for files that no longer exist
+    #[clap(setting = clap::AppSettings::NoAutoVersion)]
     Cleanup {
-        #[structopt(short, long)]
+        #[clap(short, long, help_heading = "FLAGS")]
         /// Actually delete thumbnails
         force: bool,
 
-        #[structopt(short, long)]
+        #[clap(short, long, value_name = "GLOB")]
         /// Include or exclude files and directories that match the given globs. Can be used
         /// multiple times. Globbing rules match .gitignore globs. Precede a glob with a !
         /// to exclude it.

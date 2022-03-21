@@ -6,7 +6,6 @@ edition = "2021"
 rust-version = "1.57"
 
 [dependencies]
-structopt = "0.3"
 anyhow = "1"
 url = "2"
 md5 = "0.7"
@@ -18,6 +17,10 @@ globset = "0.4"
 png_pong = "0.8"
 humantime = "2"
 atty = "0.2"
+
+[dependencies.clap]
+version = "3"
+features = ["derive", "cargo", "wrap_help"]
 
 [build-dependencies]
 version_check = "0.9"

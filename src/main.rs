@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use clap::{CommandFactory, FromArgMatches};
 use env_logger::{Builder, Env};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use log::*;
@@ -6,7 +7,6 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
 use std::time::SystemTime;
-use structopt::StructOpt;
 use thumbs::cli::{Command, ProgramOptions};
 use thumbs::{show, Thumbnail, UnThumbnailer};
 
@@ -38,10 +38,10 @@ fn main() {
 }
 
 fn run() -> Result<bool> {
-    let args_matches = ProgramOptions::clap().get_matches();
-    let args = ProgramOptions::from_clap(&args_matches);
+    let args_matches = ProgramOptions::command().get_matches();
+    let args = ProgramOptions::from_arg_matches(&args_matches)?;
 
-    if args.version {
+    if args_matches.is_present("version") {
         // HACK to disambiguate short/long invocations for the same cli option;
         // there has to be a better way of doing this...
         let i = args_matches
@@ -68,7 +68,7 @@ fn run() -> Result<bool> {
     let cmd = if let Some(cmd) = &args.cmd {
         cmd
     } else {
-        ProgramOptions::clap().print_help()?;
+        ProgramOptions::command().print_help()?;
         std::process::exit(1);
     };
 

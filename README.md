@@ -12,12 +12,14 @@ It supports any desktop environment that respects the
 
 Precompiled binaries are available on the [Release Page] for x86_64 Linux (statically compiled).
 
-If you are a **Fedora** (33+, x86_64/aarch64/armhfp) user, you can install thumbs with:
+If you are a **Fedora/RHEL/CentOS-Stream** user, you can install thumbs with:
 
 ```sh
 sudo dnf copr enable gourlaysama/thumbs
 sudo dnf install thumbs
 ```
+
+(Supported archs are: aarch64, armhfp, ppc64le or x86_64 on Fedora, and the subset supported by COPR for RHEL/CentOS)
 
 Otherwise you will need to [build from source](#building-from-source).
 
@@ -69,7 +71,7 @@ Deleted 753 thumbnails(s).
 ## Building from source
 
 thumbs is written in Rust, so you need a [Rust install] to build it. thumbs compiles with
-Rust 1.52 or newer.
+Rust 1.57 or newer.
 
 ```sh
 $ git clone https://github.com/gourlaysama/thumbs -b v0.3.2

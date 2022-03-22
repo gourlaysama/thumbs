@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Features
+
+* Support for deleting the placeholder thumbnails created when thumbnail generation fails.
+
 ## [0.3.2] - 2021-11-05
 
 ### Changes

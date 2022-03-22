@@ -15,7 +15,7 @@ pub mod cli;
 pub struct UnThumbnailer {
     pub recursive: bool,
     pub hidden: bool,
-    cache_locs: [PathBuf; 2],
+    cache_locs: Vec<PathBuf>,
 }
 
 impl UnThumbnailer {
@@ -172,7 +172,7 @@ enum Mode {
 
 fn do_for_thumbnail(
     path: &Path,
-    locations: &[PathBuf; 2],
+    locations: &[PathBuf],
     acc_paths: &mut Vec<Thumbnail>,
     mode: Mode,
 ) -> Result<()> {
@@ -235,12 +235,30 @@ fn is_hidden_unix(str: &OsStr) -> bool {
     c == '.'
 }
 
-fn find_cache_locations() -> Result<[PathBuf; 2]> {
+fn find_cache_locations() -> Result<Vec<PathBuf>> {
     let mut cache = dirs::cache_dir().ok_or_else(|| anyhow!("Could not find cache directory"))?;
     cache.push("thumbnails/");
 
     // TODO this ignores errors in iterating the subdirs
-    let locations = [cache.join("normal"), cache.join("large")];
+    let init_locations = [
+        cache.join("normal"),
+        cache.join("large"),
+        cache.join("fail"),
+    ];
+    let mut locations = Vec::new();
+    for loc in init_locations {
+        let walk = WalkDir::new(&loc);
+
+        for entry in walk
+            .into_iter()
+            .filter_entry(|e| e.file_type().is_dir())
+            .filter_map(|e| e.ok())
+        {
+            trace!("entry: {:?}", entry);
+            locations.push(entry.into_path());
+        }
+    }
+
     if log_enabled!(log::Level::Debug) {
         debug!("Will look for thumbnails in the following directories:");
         for loc in &locations {

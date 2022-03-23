@@ -4,6 +4,12 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.3.3] - 2022-03-23
+
+### Features
+
+* Support for deleting the placeholder thumbnails created when thumbnail generation fails.
+
 ## [0.4.0] - 2022-03-22
 
 ### Packaging
@@ -75,6 +81,7 @@
 <!-- next-url -->
 [Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/gourlaysama/thumbs/compare/v0.3.2...v0.4.0
+[0.3.3]: https://github.com/gourlaysama/thumbs/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/gourlaysama/thumbs/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/gourlaysama/thumbs/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/gourlaysama/thumbs/compare/v0.2.2...v0.3.0

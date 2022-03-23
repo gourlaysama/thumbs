@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{anyhow, format_err, Context, Result};
 use globset::{Candidate, GlobSet};
 use log::*;
 use png_pong::{chunk::Chunk, Decoder};

@@ -1,4 +1,4 @@
-use anyhow::*;
+use anyhow::{bail, Result};
 use log::LevelFilter;
 use std::{path::PathBuf, time::SystemTime};
 use structopt::StructOpt;

@@ -104,6 +104,6 @@ for inclusion in thumbs by you, as defined in the Apache-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
 </sub>
 
-[Release Page]: https://github.com/gourlaysama/thumbs/releases/latest
+[Release Page]: https://github.com/gourlaysama/thumbs/releases/tag/v0.4.0
 [Rust install]: https://www.rust-lang.org/tools/install
 [1]: https://specifications.freedesktop.org/thumbnail-spec/thumbnail-spec-latest.html

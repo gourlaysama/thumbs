@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.4.1] - 2022-05-16
+
 ### Features
 
 * Added Nautilus integration (Delete thumbnails from context menu in Nautilus). See `extra/nautilus/INSTALL.md` for instructions, or install the `thumbs-nautilus` package from COPR.
@@ -83,7 +85,8 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/gourlaysama/thumbs/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/gourlaysama/thumbs/compare/v0.3.2...v0.4.0
 [0.3.3]: https://github.com/gourlaysama/thumbs/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/gourlaysama/thumbs/compare/v0.3.1...v0.3.2

@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Features
+
+* Added Nautilus integration (Delete thumbnails from context menu in Nautilus). See `extra/nautilus/INSTALL.md` for instructions, or install the `thumbs-nautilus` package from COPR.
+
 ## [0.3.3] - 2022-03-23
 
 ### Features

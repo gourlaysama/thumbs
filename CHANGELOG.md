@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Fixes
+
+* Added the Nautilus integration script to the release tarball.
+
 ## [0.4.1] - 2022-05-16
 
 ### Features

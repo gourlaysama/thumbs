@@ -43,6 +43,7 @@ jobs:
           cp -p CHANGELOG.md "$DIST_DIR"
           cp -p LICENSE "$DIST_DIR"
           cp -p NOTICE "$DIST_DIR"
+          cp -rp extra "$DIST_DIR"
           strip "$DIST_DIR/thumbs"
           tar -czf "$TARGET_FILE" "$DIST_DIR"
           sha256sum "$TARGET_FILE" > "$TARGET_FILE.sha256"

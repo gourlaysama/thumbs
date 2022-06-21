@@ -4,6 +4,12 @@ version = "0.4.3-dev"
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2021"
 rust-version = "1.57"
+description = "A CLI tool to manage the cached thumbnails for files."
+documentation = "https://github.com/gourlaysama/thumbs"
+homepage = "https://github.com/gourlaysama/thumbs"
+repository = "https://github.com/gourlaysama/thumbs"
+readme = "README.md"
+license = "Apache-2.0"
 
 [dependencies]
 anyhow = "1"

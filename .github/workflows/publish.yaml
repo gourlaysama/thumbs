@@ -9,8 +9,27 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Publish binaries
+  init:
+    name: Open draft release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create release text
+        run: |
+          G_TAG=${{ github.ref }}
+          G_VERSION=${G_TAG#refs/tags/v}
+          echo "G_VERSION=$G_VERSION" >> $GITHUB_ENV
+          awk "NR==3 { print \$0 }; S && /^## / { S=0 } ; S { print \$0 }; /\[$G_VERSION\][^:]/ { S=1 }" < CHANGELOG.md > GH_RELEASE.md
+      - name: Create Github release
+        id: gh-release
+        uses:  softprops/action-gh-release@v1
+        with:
+          name: thumbs ${{ env.G_VERSION }}
+          draft: true
+          body_path: GH_RELEASE.md
+  tarball:
+    name: Build tarball
+    needs: init
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +43,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends musl-tools
-      - uses: actions-rs/cargo@v1
+      - name: Build static release
+        uses: actions-rs/cargo@v1
         env:
           RUSTFLAGS: -Ccodegen-units=1 -Clink-arg=-Wl,-z,relro
         with:
@@ -47,16 +67,49 @@ jobs:
           strip "$DIST_DIR/thumbs"
           tar -czf "$TARGET_FILE" "$DIST_DIR"
           sha256sum "$TARGET_FILE" > "$TARGET_FILE.sha256"
-          echo "G_VERSION=$G_VERSION" >> $GITHUB_ENV
-      - name: Create Github release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Upload package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          G_TAG=${{ github.ref }}
+          G_VERSION=${G_TAG#refs/tags/}
+          gh release upload $G_VERSION *.tar.gz *.tar.gz.sha256
+  debian:
+    name: Build Debian package
+    needs: init
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
         with:
-          name: thumbs ${{ env.G_VERSION }}
-          draft: true
-          body_path: CHANGELOG.md
-          files: |
-            *.tar.gz
-            *.tar.gz.sha256
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-unknown-linux-musl
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dpkg-dev musl-tools
+      - name: Install cargo-deb
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-deb
+      - name: Build static release
+        uses: actions-rs/cargo@v1
+        env:
+          RUSTFLAGS: -Ccodegen-units=1 -Clink-arg=-Wl,-z,relro
+        with:
+          command: build
+          args: --verbose --release --target x86_64-unknown-linux-musl
+      - uses: actions-rs/cargo@v1
+        with:
+          command: deb
+          args: --verbose --no-build --target x86_64-unknown-linux-musl
+      - name: Upload package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          G_TAG=${{ github.ref }}
+          G_VERSION=${G_TAG#refs/tags/}
+          gh release upload $G_VERSION "$(find target/x86_64-unknown-linux-musl/debian/ -name "*.deb")"

@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.4.3] - 2022-06-22
+
 ### Packaging
 
 * There is now a x86_64 debian package available for download on the release page.
@@ -95,7 +97,8 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/gourlaysama/thumbs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/gourlaysama/thumbs/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/gourlaysama/thumbs/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/gourlaysama/thumbs/compare/v0.3.2...v0.4.0

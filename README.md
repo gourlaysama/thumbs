@@ -10,7 +10,7 @@ It supports any desktop environment that respects the
 
 ## Installation
 
-Precompiled binaries are available on the [Release Page] for x86_64 Linux (statically compiled).
+Precompiled binaries and a **Debian package** are available on the [Release Page] for x86_64 Linux (statically compiled).
 
 If you are a **Fedora/RHEL/CentOS-Stream** user, you can install thumbs with:
 

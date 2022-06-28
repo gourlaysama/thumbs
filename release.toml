@@ -6,7 +6,7 @@ pre-release-replacements = [
   {file="CHANGELOG.md", search="<!-- next-header -->", replace="<!-- next-header -->\n## [Unreleased] - TBD\n"},
   {file="CHANGELOG.md", search="<!-- next-url -->", replace="<!-- next-url -->\n[Unreleased]: https://github.com/gourlaysama/thumbs/compare/{{tag_name}}...HEAD"},
   {file="README.md", search="-b v.+\n\\$", replace="-b v{{version}}\n$"},
-  {file="README.md", search="--version\nthumbs .+", replace="--version\nthumbs {{version}}"},
+  {file="README.md", search="-V\nthumbs .+", replace="-V\nthumbs {{version}}"},
 ]
 post-release-commit-message = "release: bumping to {{next_version}}"
 tag-message = "release: {{crate_name}} version {{version}}"

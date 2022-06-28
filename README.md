@@ -77,7 +77,7 @@ Rust 1.57 or newer.
 $ git clone https://github.com/gourlaysama/thumbs -b v0.4.3
 $ cd thumbs
 $ cargo build --release
-$ ./target/release/thumbs --version
+$ ./target/release/thumbs -V
 thumbs 0.4.3
 ```
 

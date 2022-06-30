@@ -74,11 +74,11 @@ thumbs is written in Rust, so you need a [Rust install] to build it. thumbs comp
 Rust 1.57 or newer.
 
 ```sh
-$ git clone https://github.com/gourlaysama/thumbs -b v0.4.3
+$ git clone https://github.com/gourlaysama/thumbs -b v0.4.4
 $ cd thumbs
 $ cargo build --release
 $ ./target/release/thumbs -V
-thumbs 0.4.3
+thumbs 0.4.4
 ```
 
 ## TODO

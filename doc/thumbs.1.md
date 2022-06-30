@@ -1,4 +1,4 @@
-% THUMBS(1) Version 0.4.3 | Thumbs Usage Documentation
+% THUMBS(1) Version 0.4.4 | Thumbs Usage Documentation
 
 NAME
 ====

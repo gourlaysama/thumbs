@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Packaging
+
+* There is now a man page for thumbs available in the release tarball (generated with pandoc, from `doc/thumbs.1.md`).
+
 ## [0.4.3] - 2022-06-22
 
 ### Packaging

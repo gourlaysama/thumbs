@@ -33,3 +33,15 @@ version_check = "0.9"
 
 [profile.release]
 lto = true
+
+[package.metadata.deb]
+priority = "optional"
+assets = [
+    ["target/x86_64-unknown-linux-musl/release/thumbs", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/thumbs/", "644"],
+    ["CHANGELOG.md", "usr/share/doc/thumbs/", "644"],
+    ["LICENSE", "usr/share/doc/thumbs/", "644"],
+    ["NOTICE", "usr/share/doc/thumbs/", "644"],
+    ["extra/nautilus/thumbs-nautilus.py", "use/share/nautilus-python/extensions/", "644"],
+    ["thumbs.1.gz", "usr/share/man/man1/thumbs.1.gz", "644"]
+]

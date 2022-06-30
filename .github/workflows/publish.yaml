@@ -43,7 +43,7 @@ jobs:
       - name: Install native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends musl-tools
+          sudo apt-get install -y --no-install-recommends musl-tools pandoc
       - name: Build static release
         uses: actions-rs/cargo@v1
         env:
@@ -65,6 +65,7 @@ jobs:
           cp -p LICENSE "$DIST_DIR"
           cp -p NOTICE "$DIST_DIR"
           cp -rp extra "$DIST_DIR"
+          pandoc -s --to man doc/thumbs.1.md -o "$DIST_DIR/thumbs.1"
           strip "$DIST_DIR/thumbs"
           tar -czf "$TARGET_FILE" "$DIST_DIR"
           sha256sum "$TARGET_FILE" > "$TARGET_FILE.sha256"
@@ -90,7 +91,7 @@ jobs:
       - name: Install native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends dpkg-dev musl-tools
+          sudo apt-get install -y --no-install-recommends dpkg-dev musl-tools pandoc
       - name: Install cargo-deb
         uses: actions-rs/cargo@v1
         with:
@@ -103,6 +104,10 @@ jobs:
         with:
           command: build
           args: --verbose --release --target x86_64-unknown-linux-musl
+      - name: Generate man page
+        run: |
+          pandoc -s --to man doc/thumbs.1.md -o "thumbs.1"
+          gzip thumbs.1
       - uses: actions-rs/cargo@v1
         with:
           command: deb

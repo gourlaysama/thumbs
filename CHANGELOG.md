@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Packaging
+
+* Shell completions for thumbs are now provided (for bash, zsh and fish).
+
 ## [0.4.4] - 2022-06-30
 
 ### Packaging

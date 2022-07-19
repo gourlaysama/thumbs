@@ -6,9 +6,11 @@ use std::{path::PathBuf, time::SystemTime};
 #[derive(Debug, clap::Parser)]
 #[clap(
     about = "Utility to find and delete generated thumbnails.",
-    setting = clap::AppSettings::NoAutoVersion,
+    global_setting = clap::AppSettings::NoAutoVersion,
     mut_arg("help", |h| h.help_heading("INFO")),
     mut_arg("version", |h| h.help_heading("INFO")),
+    version,
+    propagate_version = true
 )]
 pub struct ProgramOptions {
     /// Pass for more log output.
@@ -67,7 +69,6 @@ impl ProgramOptions {
 #[derive(Debug, clap::Parser)]
 pub enum Command {
     /// Delete the thumbnails for the given files
-    #[clap(setting = clap::AppSettings::NoAutoVersion)]
     Delete {
         #[clap(short, long, help_heading = "FLAGS")]
         /// Do not prompt and actually delete thumbnails
@@ -85,14 +86,12 @@ pub enum Command {
         last_accessed: Option<SystemTime>,
     },
     /// Print the path of thumbnails for the given files
-    #[clap(setting = clap::AppSettings::NoAutoVersion)]
     Locate {
         #[clap(parse(from_os_str), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// File whose thumbnails are to be found
         file: PathBuf,
     },
     /// Find thumbnails for files that no longer exist
-    #[clap(setting = clap::AppSettings::NoAutoVersion)]
     Cleanup {
         #[clap(short, long, help_heading = "FLAGS")]
         /// Actually delete thumbnails

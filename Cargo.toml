@@ -52,5 +52,8 @@ assets = [
     ["LICENSE", "usr/share/doc/thumbs/", "644"],
     ["NOTICE", "usr/share/doc/thumbs/", "644"],
     ["extra/nautilus/thumbs-nautilus.py", "use/share/nautilus-python/extensions/", "644"],
+    ["complete/thumbs.bash", "usr/share/bash-completion/completions/thumbs", "644"],
+    ["complete/thumbs.fish", "usr/share/fish/vendor_completions.d/", "644"],
+    ["complete/_thumbs", "usr/share/zsh/site-functions/", "644"],
     ["thumbs.1.gz", "usr/share/man/man1/thumbs.1.gz", "644"]
 ]

@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.4.5] - 2022-07-19
+
 ### Packaging
 
 * Shell completions for thumbs are now provided (for bash, zsh and fish).
@@ -107,7 +109,8 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/gourlaysama/thumbs/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/gourlaysama/thumbs/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/gourlaysama/thumbs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/gourlaysama/thumbs/compare/v0.4.1...v0.4.2

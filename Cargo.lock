@@ -736,6 +736,7 @@ dependencies = [
  "humantime",
  "log",
  "md5",
+ "percent-encoding",
  "png_pong",
  "serde",
  "url",

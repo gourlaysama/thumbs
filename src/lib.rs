@@ -1,6 +1,7 @@
 use anyhow::{anyhow, format_err, Context, Result};
 use globset::{Candidate, GlobSet};
 use log::*;
+use percent_encoding::{percent_encode, AsciiSet};
 use png_pong::{chunk::Chunk, Decoder};
 use std::fs::{remove_file, File};
 use std::path::{Path, PathBuf};
@@ -10,6 +11,24 @@ use url::Url;
 use walkdir::{DirEntry, WalkDir};
 
 pub mod cli;
+
+const CUSTOM_ENCODING_SET: &AsciiSet = &percent_encoding::CONTROLS
+    .add(b' ')
+    .add(b'"')
+    .add(b'#')
+    .add(b'%')
+    .add(b'*')
+    .add(b':')
+    .add(b';')
+    .add(b'<')
+    .add(b'>')
+    .add(b'[')
+    .add(b'\\')
+    .add(b']')
+    .add(b'^')
+    .add(b'{')
+    .add(b'|')
+    .add(b'}');
 
 #[derive(Debug)]
 pub struct UnThumbnailer {
@@ -177,13 +196,18 @@ fn do_for_thumbnail(
     mode: Mode,
 ) -> Result<()> {
     // TODO is canonicalize too much? (it resolves symlinks)
-    let url = if !path.is_absolute() {
-        Url::from_file_path(&path.canonicalize()?)
+    let inner = if !path.is_absolute() {
+        path.canonicalize()
+            .map_err(|_| format_err!("Non absolute path: {:?}", &path))?
+            .into_os_string()
     } else {
-        Url::from_file_path(&path)
-    }
-    .map_err(|_| format_err!("Non absolute path: {:?}", &path))?;
-    trace!("Url: {:?}", url);
+        path.into()
+    };
+
+    let mut url = String::new();
+    url.push_str("file://");
+    url.extend(percent_encode(inner.as_bytes(), &CUSTOM_ENCODING_SET));
+    trace!("Encoded Url: {:?}", url);
 
     let digest = md5::compute(url.as_str().as_bytes());
 
@@ -243,6 +267,8 @@ fn find_cache_locations() -> Result<Vec<PathBuf>> {
     let init_locations = [
         cache.join("normal"),
         cache.join("large"),
+        cache.join("x-large"),
+        cache.join("xx-large"),
         cache.join("fail"),
     ];
     let mut locations = Vec::new();

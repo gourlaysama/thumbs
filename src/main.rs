@@ -41,7 +41,7 @@ fn run() -> Result<bool> {
     let args_matches = ProgramOptions::command().get_matches();
     let args = ProgramOptions::from_arg_matches(&args_matches)?;
 
-    if args_matches.is_present("version") {
+    if args_matches.get_flag("version") {
         // HACK to disambiguate short/long invocations for the same cli option;
         // there has to be a better way of doing this...
         let i = args_matches

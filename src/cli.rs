@@ -1,44 +1,44 @@
 use anyhow::{bail, Result};
-use clap::ValueHint;
+use clap::{ArgAction, ValueHint};
 use log::LevelFilter;
 use std::{path::PathBuf, time::SystemTime};
 
 #[derive(Debug, clap::Parser)]
-#[clap(
+#[command(
     about = "Utility to find and delete generated thumbnails.",
-    global_setting = clap::AppSettings::NoAutoVersion,
-    mut_arg("help", |h| h.help_heading("INFO")),
-    mut_arg("version", |h| h.help_heading("INFO")),
-    version,
-    propagate_version = true
+    disable_version_flag = true
 )]
 pub struct ProgramOptions {
+    #[clap(short = 'V', long, help_heading = "Info", global = true)]
+    /// Version information
+    pub version: bool,
+
     /// Pass for more log output.
     #[clap(
         long,
         short,
         global = true,
-        parse(from_occurrences),
-        help_heading = "FLAGS"
+        action = ArgAction::Count,
+        help_heading = "Flags"
     )]
-    verbose: i8,
+    verbose: u8,
 
     /// Pass for less log output.
     #[clap(
         long,
         short,
         global = true,
-        parse(from_occurrences),
+        action = ArgAction::Count,
         conflicts_with = "verbose",
-        help_heading = "FLAGS"
+        help_heading = "Flags"
     )]
-    quiet: i8,
+    quiet: u8,
 
-    #[clap(short, long, help_heading = "FLAGS", global = true)]
+    #[clap(short, long, help_heading = "Flags", global = true)]
     /// Recurse through directories
     pub recursive: bool,
 
-    #[clap(short, long, help_heading = "FLAGS", global = true)]
+    #[clap(short, long, help_heading = "Flags", global = true)]
     /// Include hidden files and directories
     pub all: bool,
 
@@ -47,15 +47,15 @@ pub struct ProgramOptions {
 }
 
 impl ProgramOptions {
-    pub fn log_level_with_default(&self, default: i8) -> Option<LevelFilter> {
-        let level = default + self.verbose - self.quiet;
+    pub fn log_level_with_default(&self, default: i16) -> Option<LevelFilter> {
+        let level = default + self.verbose as i16 - self.quiet as i16;
         let new_level = match level {
-            i8::MIN..=0 => LevelFilter::Off,
+            i16::MIN..=0 => LevelFilter::Off,
             1 => LevelFilter::Error,
             2 => LevelFilter::Warn,
             3 => LevelFilter::Info,
             4 => LevelFilter::Debug,
-            5..=i8::MAX => LevelFilter::Trace,
+            5..=i16::MAX => LevelFilter::Trace,
         };
 
         if level != default {
@@ -70,11 +70,11 @@ impl ProgramOptions {
 pub enum Command {
     /// Delete the thumbnails for the given files
     Delete {
-        #[clap(short, long, help_heading = "FLAGS")]
+        #[clap(short, long, help_heading = "Flags")]
         /// Do not prompt and actually delete thumbnails
         force: bool,
 
-        #[clap(parse(from_os_str), value_hint(ValueHint::FilePath), value_name = "FILE")]
+        #[clap(value_parser = clap::value_parser!(PathBuf), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// Files whose thumbnails to delete
         files: Vec<PathBuf>,
 
@@ -82,18 +82,18 @@ pub enum Command {
         ///
         /// Can be either a RFC3339-like timestamp (`2020-01-01 11:10:00`) or a free-form
         /// duration like `1year 15days 1week 2min` or `1h 6s 2ms`.
-        #[clap(short, long, parse(try_from_str = parse_last_accessed))]
+        #[clap(short, long, value_parser = parse_last_accessed)]
         last_accessed: Option<SystemTime>,
     },
     /// Print the path of thumbnails for the given files
     Locate {
-        #[clap(parse(from_os_str), value_hint(ValueHint::FilePath), value_name = "FILE")]
+        #[clap(value_parser = clap::value_parser!(PathBuf), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// File whose thumbnails are to be found
         file: PathBuf,
     },
     /// Find thumbnails for files that no longer exist
     Cleanup {
-        #[clap(short, long, help_heading = "FLAGS")]
+        #[clap(short, long, help_heading = "Flags")]
         /// Actually delete thumbnails
         force: bool,
 

@@ -1,25 +1,28 @@
-use anyhow::{bail, Result};
-use clap::{ArgAction, ValueHint};
+use anyhow::{Result, bail};
+use clap::{ArgAction, ValueHint, builder::styling};
 use log::LevelFilter;
 use std::{path::PathBuf, time::SystemTime};
+
+const STYLES: styling::Styles = styling::Styles::styled()
+    .header(styling::AnsiColor::Green.on_default().bold())
+    .usage(styling::AnsiColor::Green.on_default().bold())
+    .literal(styling::AnsiColor::Cyan.on_default().bold())
+    .placeholder(styling::AnsiColor::Cyan.on_default());
 
 #[derive(Debug, clap::Parser)]
 #[command(
     about = "Utility to find and delete generated thumbnails.",
-    disable_version_flag = true
+    disable_version_flag = true,
+    styles = STYLES,
 )]
 pub struct ProgramOptions {
-    #[clap(short = 'V', long, help_heading = "Info", global = true)]
-    /// Version information
-    pub version: bool,
-
     /// Pass for more log output.
     #[clap(
         long,
         short,
         global = true,
         action = ArgAction::Count,
-        help_heading = "Flags"
+        help_heading = "Global Flags"
     )]
     verbose: u8,
 
@@ -30,20 +33,16 @@ pub struct ProgramOptions {
         global = true,
         action = ArgAction::Count,
         conflicts_with = "verbose",
-        help_heading = "Flags"
+        help_heading = "Global Flags"
     )]
     quiet: u8,
 
-    #[clap(short, long, help_heading = "Flags", global = true)]
-    /// Recurse through directories
-    pub recursive: bool,
-
-    #[clap(short, long, help_heading = "Flags", global = true)]
-    /// Include hidden files and directories
-    pub all: bool,
-
     #[clap(subcommand)]
     pub cmd: Option<Command>,
+
+    #[clap(short = 'V', long, help_heading = "Info", global = true)]
+    /// Version information
+    pub version: bool,
 }
 
 impl ProgramOptions {
@@ -71,8 +70,16 @@ pub enum Command {
     /// Delete the thumbnails for the given files
     Delete {
         #[clap(short, long, help_heading = "Flags")]
+        /// Recurse through directories
+        recursive: bool,
+
+        #[clap(short, long, help_heading = "Flags")]
         /// Do not prompt and actually delete thumbnails
         force: bool,
+
+        #[clap(short, long, help_heading = "Flags", global = true)]
+        /// Include hidden files and directories
+        all: bool,
 
         #[clap(value_parser = clap::value_parser!(PathBuf), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// Files whose thumbnails to delete
@@ -96,6 +103,10 @@ pub enum Command {
         #[clap(short, long, help_heading = "Flags")]
         /// Actually delete thumbnails
         force: bool,
+
+        #[clap(short, long, help_heading = "Flags", global = true)]
+        /// Include hidden files and directories
+        all: bool,
 
         #[clap(short, long, value_name = "GLOB")]
         /// Include or exclude files and directories that match the given globs. Can be used

@@ -32,17 +32,13 @@ const CUSTOM_ENCODING_SET: &AsciiSet = &percent_encoding::CONTROLS
 
 #[derive(Debug)]
 pub struct UnThumbnailer {
-    pub recursive: bool,
-    pub hidden: bool,
     cache_locs: Vec<PathBuf>,
 }
 
 impl UnThumbnailer {
-    pub fn new(recursive: bool, hidden: bool) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let cache_locs = find_cache_locations()?;
         Ok(Self {
-            recursive,
-            hidden,
             cache_locs,
         })
     }
@@ -55,6 +51,8 @@ impl UnThumbnailer {
         paths: &[PathBuf],
         dry_run: bool,
         last_accessed: Option<SystemTime>,
+        recursive: bool,
+        hidden: bool,
     ) -> Result<DeleteResults> {
         let mut thumbs = Vec::new();
         let mut nb_ignore_dirs = 0;
@@ -66,17 +64,17 @@ impl UnThumbnailer {
                 do_for_thumbnail(path, &self.cache_locs, &mut thumbs, mode)?;
             } else {
                 let mut walk = WalkDir::new(path).min_depth(1);
-                if !self.recursive {
+                if !recursive {
                     walk = walk.max_depth(1);
                 }
                 for entry in walk
                     .into_iter()
-                    .filter_entry(|e| self.hidden || !is_hidden_unix(e.file_name()))
+                    .filter_entry(|e| hidden || !is_hidden_unix(e.file_name()))
                     .filter_map(|e| e.ok())
                 {
                     trace!("entry: {:?}", entry);
                     if entry.file_type().is_dir() {
-                        if !self.recursive {
+                        if !recursive {
                             nb_ignore_dirs += 1;
                         }
                     } else if let Some(last_accessed) = last_accessed {
@@ -141,13 +139,14 @@ impl UnThumbnailer {
         force: bool,
         exclude: &GlobSet,
         include: &GlobSet,
+        hidden: bool,
     ) -> Result<Vec<Thumbnail>> {
         let mut thumbs = Vec::new();
         for location in &self.cache_locs {
             for entry in WalkDir::new(location)
                 .min_depth(1)
                 .into_iter()
-                .filter_entry(|e| self.hidden || !is_hidden_unix(e.file_name()))
+                .filter_entry(|e| hidden || !is_hidden_unix(e.file_name()))
                 .filter_map(|e| e.ok())
                 .filter(|e| {
                     !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")

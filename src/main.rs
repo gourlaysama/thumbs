@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{CommandFactory, FromArgMatches};
 use env_logger::{Builder, Env};
 use globset::{Glob, GlobSet, GlobSetBuilder};
@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::time::SystemTime;
 use thumbs::cli::{Command, ProgramOptions};
-use thumbs::{show, Thumbnail, UnThumbnailer};
+use thumbs::{Thumbnail, UnThumbnailer, show};
 
 const LOG_ENV_VAR: &str = "THUMBS_LOG";
 
@@ -59,7 +59,7 @@ fn run() -> Result<bool> {
     b.format_timestamp(None);
     b.filter_level(LevelFilter::Warn); // default filter lever
     b.parse_env(Env::from(LOG_ENV_VAR)); // override with env
-                                         // override with CLI option
+    // override with CLI option
     if let Some(level) = args.log_level_with_default(2) {
         b.filter_level(level);
     };
@@ -72,9 +72,9 @@ fn run() -> Result<bool> {
         std::process::exit(1);
     };
 
-    let un = thumbs::UnThumbnailer::new(args.recursive, args.all)?;
+    let un = thumbs::UnThumbnailer::new()?;
     match cmd {
-        Command::Cleanup { force, glob } => {
+        Command::Cleanup { force, glob, all } => {
             let mut builder_exclude = GlobSetBuilder::new();
             let mut builder_include = GlobSetBuilder::new();
             let mut include_all = true;
@@ -92,13 +92,15 @@ fn run() -> Result<bool> {
             let set_exclude = builder_exclude.build()?;
             let set_include = builder_include.build()?;
 
-            do_cleanup(&un, *force, &set_exclude, &set_include)
+            do_cleanup(&un, *force, &set_exclude, &set_include, *all)
         }
         Command::Delete {
+            recursive,
             force,
             files,
             last_accessed,
-        } => do_delete(&un, files, *force, *last_accessed),
+            all,
+        } => do_delete(&un, files, *force, *last_accessed, *recursive, *all),
         Command::Locate { file } => {
             let thumbs = un.locate(file)?;
 
@@ -116,8 +118,9 @@ fn do_cleanup(
     force: bool,
     set_exclude: &GlobSet,
     set_include: &GlobSet,
+    hidden: bool,
 ) -> Result<bool> {
-    let thumbs = un.cleanup(force, set_exclude, set_include)?;
+    let thumbs = un.cleanup(force, set_exclude, set_include, hidden)?;
     let nb_thumbs = thumbs.len();
     if nb_thumbs == 0 {
         warn!("Found no thumbnails to cleanup.")
@@ -142,8 +145,10 @@ fn do_delete(
     files: &[PathBuf],
     force: bool,
     last_accessed: Option<SystemTime>,
+    recursive: bool,
+    hidden: bool,
 ) -> Result<bool> {
-    let results = un.delete(files, !force, last_accessed)?;
+    let results = un.delete(files, !force, last_accessed, recursive, hidden)?;
     let thumbnail_count = results.thumbnail_paths.len();
 
     if results.ignored_directories != 0 {

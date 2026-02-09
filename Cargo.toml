@@ -23,6 +23,7 @@ walkdir = "2"
 globset = "0.4"
 png_pong = "0.10"
 humantime = "2"
+shadow-rs = { version = "1", default-features = false }
 
 [dependencies.clap]
 version = "4"
@@ -39,6 +40,7 @@ clap_complete = "4"
 log = "0.4"
 anyhow = "1"
 humantime = "2"
+shadow-rs = "1"
 
 [profile.release]
 lto = true

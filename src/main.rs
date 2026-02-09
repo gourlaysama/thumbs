@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::process::{ExitCode, Termination};
 use std::time::SystemTime;
 use thumbs::cli::{Command, ProgramOptions};
-use thumbs::{Thumbnail, UnThumbnailer, show};
+use thumbs::{Thumbnail, UnThumbnailer, build, show};
 
 const LOG_ENV_VAR: &str = "THUMBS_LOG";
 
@@ -235,15 +235,44 @@ fn cached_delete(thumbnails: &[Thumbnail]) -> Result<()> {
 }
 
 fn print_version(long: bool) {
+    println!(
+        "{} {}{}",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION"),
+        get_version_suffix(),
+    );
+
     if long {
-        println!(
-            "{} {} ({})",
-            env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_VERSION"),
-            option_env!("BUILD_ID").unwrap_or("unknown")
-        );
-        println!("rustc {} ({})", env!("BUILD_RUSTC"), env!("BUILD_INFO"));
-    } else {
-        println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+        println!("\n{}\n{}", build::RUST_VERSION, build::BUILD_TARGET);
+
+        if shadow_rs::is_debug() {
+            println!("\n+debug");
+        }
     }
+}
+
+fn get_version_suffix() -> String {
+    let mut suffix = String::new();
+
+    if build::TAG != "" {
+        // this is a tagged release
+        return suffix;
+    }
+
+    if build::COMMIT_HASH == "" {
+        // this is a tarball or equivalent
+        return suffix;
+    }
+
+    if let Some(last_tag) = build::LAST_TAG.strip_prefix('v') {
+        if last_tag == env!("CARGO_PKG_VERSION") {
+            // this is a later commit on top of some previous version
+            suffix = format!("+git.{}.{}", build::COMMITS_SINCE_TAG, build::SHORT_COMMIT);
+            if !build::GIT_CLEAN {
+                suffix.push_str(".dirty");
+            }
+        }
+    }
+
+    suffix
 }

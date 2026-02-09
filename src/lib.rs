@@ -9,6 +9,9 @@ use std::time::SystemTime;
 use std::{ffi::OsStr, io::BufReader, os::unix::prelude::OsStrExt};
 use url::Url;
 use walkdir::{DirEntry, WalkDir};
+use shadow_rs::shadow;
+
+shadow!(build);
 
 pub mod cli;
 

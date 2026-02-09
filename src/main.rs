@@ -3,36 +3,49 @@ use clap::{CommandFactory, FromArgMatches};
 use env_logger::{Builder, Env};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use log::*;
-use std::io::Write;
+use std::io::{IsTerminal, Write, stdin};
 use std::path::PathBuf;
-use std::process::exit;
+use std::process::{ExitCode, Termination};
 use std::time::SystemTime;
 use thumbs::cli::{Command, ProgramOptions};
 use thumbs::{Thumbnail, UnThumbnailer, show};
 
 const LOG_ENV_VAR: &str = "THUMBS_LOG";
 
-fn main() {
+#[repr(u8)]
+pub enum ThumbsResult {
+    OK = 0,
+    Error = 1,
+    NothingToDo = 125,
+}
+
+impl Termination for ThumbsResult {
+    fn report(self) -> ExitCode {
+        ExitCode::from(self as u8)
+    }
+}
+
+fn main() -> ThumbsResult {
     match run() {
         // Everything ok
-        Ok(true) => exit(0),
+        Ok(true) => ThumbsResult::OK,
         // Found nothing to do
-        Ok(false) => exit(125),
+        Ok(false) => ThumbsResult::NothingToDo,
         Err(e) => {
             let causes = e.chain().skip(1);
             if causes.len() != 0 {
                 if log_enabled!(Level::Info) {
-                    show!("Error: {}", e);
-                    for cause in e.chain().skip(1) {
-                        info!("cause: {}", cause);
+                    show!("Error: {e}");
+                    for cause in causes {
+                        info!("cause: {cause}");
                     }
                 } else {
-                    show!("Error: {}; rerun with '-v' for more information", e);
+                    show!("Error: {e}; rerun with '-v' for more information");
                 }
             } else {
-                show!("Error: {}", e);
+                show!("Error: {e}");
             }
-            exit(1)
+            ThumbsResult::Error
         }
     }
 }
@@ -125,16 +138,15 @@ fn do_cleanup(
     if nb_thumbs == 0 {
         warn!("Found no thumbnails to cleanup.")
     } else if !force {
-        if atty::is(atty::Stream::Stdout) {
+        if stdin().is_terminal() {
             return user_prompt(&thumbs, || cached_delete(&thumbs));
         } else {
             show!(
-                "Found {} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them.",
-                nb_thumbs
+                "Found {nb_thumbs} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them."
             );
         }
     } else {
-        show!("Deleted {} thumbnail(s).", nb_thumbs);
+        show!("Deleted {nb_thumbs} thumbnail(s).");
     }
 
     Ok(nb_thumbs != 0)
@@ -160,18 +172,17 @@ fn do_delete(
     if thumbnail_count == 0 {
         warn!("Found no thumbnails. Rerun with '-vv' for detailed information.")
     } else if !force {
-        if atty::is(atty::Stream::Stdout) {
+        if stdin().is_terminal() {
             return user_prompt(&results.thumbnail_paths, || {
                 cached_delete(&results.thumbnail_paths)
             });
         } else {
             show!(
-                "Found {} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them.",
-                thumbnail_count
+                "Found {thumbnail_count} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them."
             );
         }
     } else {
-        show!("Deleted {} thumbnail(s).", thumbnail_count);
+        show!("Deleted {thumbnail_count} thumbnail(s).");
     }
 
     Ok(thumbnail_count != 0)
@@ -195,7 +206,7 @@ where
 
         let mut confirm = String::with_capacity(1);
         std::io::stdin().read_line(&mut confirm)?;
-        trace!("read user input: {:?}", confirm);
+        trace!("read user input: {confirm:?}");
 
         if confirm.eq_ignore_ascii_case("y\n") {
             on_yes()?;

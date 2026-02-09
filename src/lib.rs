@@ -1,9 +1,9 @@
-use anyhow::{anyhow, format_err, Context, Result};
+use anyhow::{Context, Result, anyhow, format_err};
 use globset::{Candidate, GlobSet};
 use log::*;
-use percent_encoding::{percent_encode, AsciiSet};
-use png_pong::{chunk::Chunk, Decoder};
-use std::fs::{remove_file, File};
+use percent_encoding::{AsciiSet, percent_encode};
+use png_pong::{Decoder, chunk::Chunk};
+use std::fs::{File, remove_file};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use std::{ffi::OsStr, io::BufReader, os::unix::prelude::OsStrExt};
@@ -38,9 +38,7 @@ pub struct UnThumbnailer {
 impl UnThumbnailer {
     pub fn new() -> Result<Self> {
         let cache_locs = find_cache_locations()?;
-        Ok(Self {
-            cache_locs,
-        })
+        Ok(Self { cache_locs })
     }
 
     /// Delete thumbnails for the files at `paths`, possibly recursing in directories
@@ -72,7 +70,7 @@ impl UnThumbnailer {
                     .filter_entry(|e| hidden || !is_hidden_unix(e.file_name()))
                     .filter_map(|e| e.ok())
                 {
-                    trace!("entry: {:?}", entry);
+                    trace!("entry: {entry:?}");
                     if entry.file_type().is_dir() {
                         if !recursive {
                             nb_ignore_dirs += 1;
@@ -99,7 +97,7 @@ impl UnThumbnailer {
                                     "Failed to find accesstime of {}",
                                     entry.path().to_string_lossy()
                                 );
-                                trace!("Failed with {}", e);
+                                trace!("Failed with {e}");
                             }
                         }
                     } else {
@@ -156,9 +154,9 @@ impl UnThumbnailer {
                     Ok(_) => {}
                     Err(e) => {
                         if log_enabled!(log::Level::Trace) {
-                            trace!("{} for {}", e, entry.path().to_string_lossy());
+                            trace!("{e} for {}", entry.path().to_string_lossy());
                         } else {
-                            debug!("{} for {}", e, entry.path().to_string_lossy());
+                            debug!("{e} for {}", entry.path().to_string_lossy());
                         }
                     }
                 };
@@ -197,7 +195,7 @@ fn do_for_thumbnail(
     // TODO is canonicalize too much? (it resolves symlinks)
     let inner = if !path.is_absolute() {
         path.canonicalize()
-            .map_err(|_| format_err!("Non absolute path: {:?}", &path))?
+            .map_err(|_| format_err!("Non absolute path: {path:?}"))?
             .into_os_string()
     } else {
         path.into()
@@ -206,17 +204,17 @@ fn do_for_thumbnail(
     let mut url = String::new();
     url.push_str("file://");
     url.extend(percent_encode(inner.as_bytes(), &CUSTOM_ENCODING_SET));
-    trace!("Encoded Url: {:?}", url);
+    trace!("Encoded Url: {url:?}");
 
     let digest = md5::compute(url.as_str().as_bytes());
 
-    debug!("Processing {:?} ({:x})", path, digest);
+    debug!("Processing {path:?} ({digest:x})");
 
     let mut thumb_seen = false;
 
     for location in locations.iter() {
         let mut thumb = location.clone();
-        thumb.push(format!("{:x}", digest));
+        thumb.push(format!("{digest:x}"));
         thumb.set_extension("png");
         if thumb.exists() {
             debug!("  Found      {:?}", thumb);
@@ -239,7 +237,7 @@ fn do_for_thumbnail(
             };
             acc_paths.push(th);
         } else {
-            debug!("  Not found  {:?}", thumb);
+            debug!("  Not found  {thumb:?}");
         }
     }
 
@@ -279,7 +277,7 @@ fn find_cache_locations() -> Result<Vec<PathBuf>> {
             .filter_entry(|e| e.file_type().is_dir())
             .filter_map(|e| e.ok())
         {
-            trace!("entry: {:?}", entry);
+            trace!("entry: {entry:?}");
             locations.push(entry.into_path());
         }
     }
@@ -287,7 +285,7 @@ fn find_cache_locations() -> Result<Vec<PathBuf>> {
     if log_enabled!(log::Level::Debug) {
         debug!("Will look for thumbnails in the following directories:");
         for loc in &locations {
-            debug!("{}", loc.to_string_lossy());
+            debug!("  {}", loc.to_string_lossy());
         }
     }
 
@@ -301,7 +299,7 @@ fn clean_thumbnail(
     include: &GlobSet,
     acc_paths: &mut Vec<Thumbnail>,
 ) -> Result<()> {
-    trace!("Processing {:?}", path);
+    trace!("Processing {path:?}");
     let origin = find_uri_for_thumbnail(path)?;
 
     let origin_url = Url::parse(&origin).map_err(|s| format_err!("{}", s))?;
@@ -363,7 +361,7 @@ fn find_uri_for_thumbnail(path: &Path) -> Result<String> {
                 _ => (),
             },
             Err(e) => {
-                trace!("ignored error: {}", e);
+                trace!("ignored error: {e}");
             }
         }
     }

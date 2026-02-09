@@ -125,8 +125,5 @@ fn parse_last_accessed(s: &str) -> Result<SystemTime> {
         return Ok(SystemTime::now() - d);
     }
 
-    bail!(
-        "Cannot parse '{}' as either a RFC3339-like timestamp or a free-form duration",
-        s
-    );
+    bail!("Cannot parse '{s}' as either a RFC3339-like timestamp or a free-form duration");
 }

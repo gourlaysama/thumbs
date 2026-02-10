@@ -78,12 +78,7 @@ fn run() -> Result<bool> {
     };
     b.try_init()?;
 
-    let cmd = if let Some(cmd) = &args.cmd {
-        cmd
-    } else {
-        ProgramOptions::command().print_help()?;
-        std::process::exit(1);
-    };
+    let cmd = args.cmd.expect("unexpected command, should have been caught by clap.");
 
     let un = thumbs::UnThumbnailer::new()?;
     match cmd {
@@ -96,7 +91,7 @@ fn run() -> Result<bool> {
                     builder_exclude.add(Glob::new(g.strip_prefix('!').unwrap())?);
                 } else {
                     include_all = false;
-                    builder_include.add(Glob::new(g)?);
+                    builder_include.add(Glob::new(&g)?);
                 }
             }
             if include_all {
@@ -105,7 +100,7 @@ fn run() -> Result<bool> {
             let set_exclude = builder_exclude.build()?;
             let set_include = builder_include.build()?;
 
-            do_cleanup(&un, *force, &set_exclude, &set_include, *all)
+            do_cleanup(&un, force, &set_exclude, &set_include, all)
         }
         Command::Delete {
             recursive,
@@ -113,9 +108,9 @@ fn run() -> Result<bool> {
             files,
             last_accessed,
             all,
-        } => do_delete(&un, files, *force, *last_accessed, *recursive, *all),
+        } => do_delete(&un, files.as_ref(), force, last_accessed, recursive, all),
         Command::Locate { file } => {
-            let thumbs = un.locate(file)?;
+            let thumbs = un.locate(file.as_ref())?;
 
             for p in &thumbs {
                 show!("{}", p.thumbnail.to_string_lossy());

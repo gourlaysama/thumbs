@@ -68,6 +68,38 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
 
+    if args_matches.get_flag("help") {
+        if args.cmd.is_none() {
+            // HACK again, this only happens if -h/--help is set
+            // use this instead of ArgAction::Help because the latter creates a conflict with subcommands somehow...
+            let i = args_matches
+                .index_of("help")
+                .ok_or_else(|| anyhow!("should never happen: help set yet no version flag"))?;
+            let mut command = ProgramOptions::command();
+            if std::env::args().nth(i).unwrap_or_default() == "-h" {
+                command.print_help()?;
+            } else {
+                command.print_long_help()?;
+            }
+            return Ok(true);
+        } else if let Some(_cmd) = args.cmd {
+            let mut command = ProgramOptions::command();
+            let (name, sub_args) = args_matches.subcommand().unwrap();
+            let hidx = sub_args
+                .index_of("help")
+                .ok_or_else(|| anyhow!("should never happen: help set yet no version flag"))?;
+            let idx = std::env::args().position(|a| a == name).unwrap();
+            println!("name:{name}, hidx:{hidx}, idx:{idx}");
+            if std::env::args().nth(idx + hidx).unwrap_or_default() == "-h" {
+                command.print_help()?;
+            } else {
+                command.print_long_help()?;
+            }
+
+            return Ok(true);
+        };
+    }
+
     let mut b = Builder::default();
     b.format_timestamp(None);
     b.filter_level(LevelFilter::Warn); // default filter lever
@@ -78,7 +110,9 @@ fn run() -> Result<bool> {
     };
     b.try_init()?;
 
-    let cmd = args.cmd.expect("unexpected command, should have been caught by clap.");
+    let cmd = args
+        .cmd
+        .expect("unexpected command, should have been caught by clap.");
 
     let un = thumbs::UnThumbnailer::new()?;
     match cmd {

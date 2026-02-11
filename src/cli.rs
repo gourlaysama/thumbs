@@ -13,6 +13,7 @@ const STYLES: styling::Styles = styling::Styles::styled()
 #[command(
     about = "Utility to find and delete generated thumbnails.",
     disable_version_flag = true,
+    disable_help_flag = true,
     styles = STYLES,
 )]
 pub struct ProgramOptions {
@@ -37,12 +38,16 @@ pub struct ProgramOptions {
     )]
     quiet: u8,
 
-    #[clap(subcommand)]
-    pub cmd: Option<Command>,
-
     #[clap(short = 'V', long, help_heading = "Info", global = true)]
     /// Version information
     pub version: bool,
+
+    #[clap(short, long, help_heading = "Info", global = true)]
+    /// Help information
+    pub help: bool,
+
+    #[clap(subcommand)]
+    pub cmd: Option<Command>,
 }
 
 impl ProgramOptions {

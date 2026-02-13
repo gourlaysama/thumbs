@@ -1,64 +1,114 @@
-[package]
-name = "thumbs"
-version = "0.5.0-alpha.0"
+[workspace]
+resolver = "3"
+
+[workspace.package]
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2024"
 rust-version = "1.86"
-description = "A CLI tool to manage the cached thumbnails for files."
-documentation = "https://github.com/gourlaysama/thumbs"
-homepage = "https://github.com/gourlaysama/thumbs"
-repository = "https://github.com/gourlaysama/thumbs"
-readme = "README.md"
 license = "Apache-2.0"
 
-[dependencies]
+# Global dependencies
+[workspace.dependencies]
 anyhow = "1"
-url = "2"
-percent-encoding = "2.3.2"
-md5 = "0.8"
-log = "0.4"
-env_logger = "0.11"
-dirs = "6"
-walkdir = "2"
 globset = "0.4"
-png_pong = "0.10"
-humantime = "2"
-shadow-rs = { version = "1", default-features = false }
-
-[dependencies.clap]
-version = "4"
-features = ["derive", "cargo", "wrap_help"]
-
-[build-dependencies.clap]
-version = "4"
-features = ["derive", "cargo", "wrap_help"]
-
-[build-dependencies]
-version_check = "0.9"
-serde = { version = "1", features = ["derive"] }
-clap_complete = "4"
 log = "0.4"
-anyhow = "1"
-humantime = "2"
-shadow-rs = "1"
 
 [profile.release]
 lto = true
 
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+# Cli package
+
+[package]
+name = "thumbs"
+version = "0.5.0-alpha.0"
+description = "A CLI tool to manage the cached thumbnails for files."
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { version = "4", features = ["derive", "cargo", "wrap_help"] }
+env_logger = "0.11"
+globset = { workspace = true }
+humantime = "2"
+log = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+shadow-rs = { version = "1", default-features = false }
+url = "2"
+version_check = "0.9"
+walkdir = "2"
+thumbs-rs = { path = "thumbs-rs" }
+
+[build-dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "cargo", "wrap_help"] }
+clap_complete = "4"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+shadow-rs = { version = "1" }
+version_check = "0.9"
+humantime = "2"
+
 [package.metadata.deb]
 priority = "optional"
 assets = [
-    ["target/x86_64-unknown-linux-musl/release/thumbs", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/thumbs/", "644"],
-    ["CHANGELOG.md", "usr/share/doc/thumbs/", "644"],
-    ["LICENSE", "usr/share/doc/thumbs/", "644"],
-    ["NOTICE", "usr/share/doc/thumbs/", "644"],
-    ["extra/nautilus/thumbs-nautilus.py", "use/share/nautilus-python/extensions/", "644"],
-    ["complete/thumbs.bash", "usr/share/bash-completion/completions/thumbs", "644"],
-    ["complete/thumbs.fish", "usr/share/fish/vendor_completions.d/", "644"],
-    ["complete/_thumbs", "usr/share/zsh/site-functions/", "644"],
-    ["thumbs.1.gz", "usr/share/man/man1/thumbs.1.gz", "644"]
+    [
+        "target/x86_64-unknown-linux-musl/release/thumbs",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "README.md",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "CHANGELOG.md",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "LICENSE",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "NOTICE",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "extra/nautilus/thumbs-nautilus.py",
+        "use/share/nautilus-python/extensions/",
+        "644",
+    ],
+    [
+        "complete/thumbs.bash",
+        "usr/share/bash-completion/completions/thumbs",
+        "644",
+    ],
+    [
+        "complete/thumbs.fish",
+        "usr/share/fish/vendor_completions.d/",
+        "644",
+    ],
+    [
+        "complete/_thumbs",
+        "usr/share/zsh/site-functions/",
+        "644",
+    ],
+    [
+        "thumbs.1.gz",
+        "usr/share/man/man1/thumbs.1.gz",
+        "644",
+    ],
 ]
 
-[lints.rust]
-unsafe_code = "forbid"
+[lints]
+workspace = true

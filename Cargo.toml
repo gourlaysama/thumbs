@@ -4,7 +4,7 @@ resolver = "3"
 [workspace.package]
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2024"
-rust-version = "1.86"
+rust-version = "1.87"
 license = "Apache-2.0"
 
 # Global dependencies

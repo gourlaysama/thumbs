@@ -1,9 +1,6 @@
 use log::*;
-use shadow_rs::shadow;
 
 use thumbs_rs::Thumbnail;
-
-shadow!(build);
 
 pub mod cleanup;
 pub mod cli;

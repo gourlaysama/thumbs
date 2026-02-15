@@ -17,6 +17,7 @@ log = "0.4"
 lto = true
 
 [workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(not_build_rs)'] }
 unsafe_code = "forbid"
 
 # Cli package
@@ -39,19 +40,18 @@ globset = { workspace = true }
 humantime = "2"
 log = { workspace = true }
 serde = { version = "1", features = ["derive"] }
-shadow-rs = { version = "1", default-features = false }
 url = "2"
 version_check = "0.9"
 walkdir = "2"
 thumbs-rs = { path = "thumbs-rs" }
 
 [build-dependencies]
+build-info-build = "0.0.42"
 anyhow = "1"
 clap = { version = "4", features = ["derive", "cargo", "wrap_help"] }
 clap_complete = "4"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-shadow-rs = { version = "1" }
 version_check = "0.9"
 humantime = "2"
 

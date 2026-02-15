@@ -1,11 +1,11 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use clap::{CommandFactory, FromArgMatches};
 use env_logger::{Builder, Env};
 use globset::{Glob, GlobSetBuilder};
 use log::*;
 use std::process::{ExitCode, Termination};
 use thumbs::cli::{Command, ProgramOptions};
-use thumbs::{build, cleanup, locate, show};
+use thumbs::{cleanup, locate, show};
 
 use thumbs::delete;
 
@@ -53,52 +53,6 @@ fn run() -> Result<bool> {
     let args_matches = ProgramOptions::command().get_matches();
     let args = ProgramOptions::from_arg_matches(&args_matches)?;
 
-    if args_matches.get_flag("version") {
-        // HACK to disambiguate short/long invocations for the same cli option;
-        // there has to be a better way of doing this...
-        let i = args_matches
-            .index_of("version")
-            .ok_or_else(|| anyhow!("should never happen: version set yet no version flag"))?;
-        if std::env::args().nth(i).unwrap_or_default() == "-V" {
-            print_version(false);
-        } else {
-            print_version(true);
-        }
-        return Ok(true);
-    }
-
-    if args_matches.get_flag("help") {
-        if args.cmd.is_none() {
-            // HACK again, this only happens if -h/--help is set
-            // use this instead of ArgAction::Help because the latter creates a conflict with subcommands somehow...
-            let i = args_matches
-                .index_of("help")
-                .ok_or_else(|| anyhow!("should never happen: help set yet no version flag"))?;
-            let mut command = ProgramOptions::command();
-            if std::env::args().nth(i).unwrap_or_default() == "-h" {
-                command.print_help()?;
-            } else {
-                command.print_long_help()?;
-            }
-            return Ok(true);
-        } else if let Some(_cmd) = args.cmd {
-            let mut command = ProgramOptions::command();
-            let (name, sub_args) = args_matches.subcommand().unwrap();
-            let hidx = sub_args
-                .index_of("help")
-                .ok_or_else(|| anyhow!("should never happen: help set yet no version flag"))?;
-            let idx = std::env::args().position(|a| a == name).unwrap();
-            println!("name:{name}, hidx:{hidx}, idx:{idx}");
-            if std::env::args().nth(idx + hidx).unwrap_or_default() == "-h" {
-                command.print_help()?;
-            } else {
-                command.print_long_help()?;
-            }
-
-            return Ok(true);
-        };
-    }
-
     let mut b = Builder::default();
     b.format_timestamp(None);
     b.filter_level(LevelFilter::Warn); // default filter lever
@@ -143,47 +97,4 @@ fn run() -> Result<bool> {
         } => delete::run(files.as_ref(), force, last_accessed, recursive, all),
         Command::Locate { file } => locate::run(&file),
     }
-}
-
-fn print_version(long: bool) {
-    println!(
-        "{} {}{}",
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_PKG_VERSION"),
-        get_version_suffix(),
-    );
-
-    if long {
-        println!("\n{}\n{}", build::RUST_VERSION, build::BUILD_TARGET);
-
-        if shadow_rs::is_debug() {
-            println!("\n+debug");
-        }
-    }
-}
-
-fn get_version_suffix() -> String {
-    let mut suffix = String::new();
-
-    if build::TAG != "" {
-        // this is a tagged release
-        return suffix;
-    }
-
-    if build::COMMIT_HASH == "" {
-        // this is a tarball or equivalent
-        return suffix;
-    }
-
-    if let Some(last_tag) = build::LAST_TAG.strip_prefix('v') {
-        if last_tag == env!("CARGO_PKG_VERSION") {
-            // this is a later commit on top of some previous version
-            suffix = format!("+git.{}.{}", build::COMMITS_SINCE_TAG, build::SHORT_COMMIT);
-            if !build::GIT_CLEAN {
-                suffix.push_str(".dirty");
-            }
-        }
-    }
-
-    suffix
 }

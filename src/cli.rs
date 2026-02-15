@@ -9,13 +9,18 @@ const STYLES: styling::Styles = styling::Styles::styled()
     .literal(styling::AnsiColor::Cyan.on_default().bold())
     .placeholder(styling::AnsiColor::Cyan.on_default());
 
+#[cfg(not_build_rs)]
+const FULL_LONG_VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/full_long_version.txt"));
+
 #[derive(Debug, clap::Parser)]
 #[command(
     about = "Utility to find and delete generated thumbnails.",
-    disable_version_flag = true,
-    disable_help_flag = true,
     styles = STYLES,
 )]
+#[cfg_attr(not_build_rs, command(
+    version = env!("FULL_VERSION"),
+    long_version = FULL_LONG_VERSION,
+))]
 pub struct ProgramOptions {
     /// Pass for more log output.
     #[clap(
@@ -37,14 +42,6 @@ pub struct ProgramOptions {
         help_heading = "Global Flags"
     )]
     quiet: u8,
-
-    #[clap(short = 'V', long, help_heading = "Info", global = true)]
-    /// Version information
-    pub version: bool,
-
-    #[clap(short, long, help_heading = "Info", global = true)]
-    /// Help information
-    pub help: bool,
 
     #[clap(subcommand)]
     pub cmd: Option<Command>,

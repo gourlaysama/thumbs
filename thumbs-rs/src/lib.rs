@@ -1,3 +1,4 @@
+use etcetera::{BaseStrategy, base_strategy::Xdg};
 use globset::{Candidate, GlobSet};
 use log::*;
 use percent_encoding::{AsciiSet, percent_encode};
@@ -276,12 +277,9 @@ fn make_encoded_uri(path: &Path) -> TResult<String> {
 }
 
 fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
-    let mut cache = dirs::cache_dir().ok_or_else(|| {
-        std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "unable to locate XDG Cache directory",
-        )
-    })?;
+    let mut cache = Xdg::new()
+        .or_else(|e| Err(io::Error::new(io::ErrorKind::NotFound, e)))?
+        .cache_dir();
     cache.push("thumbnails/");
 
     // TODO this ignores errors in iterating the subdirs

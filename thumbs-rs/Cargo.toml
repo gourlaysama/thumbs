@@ -11,7 +11,7 @@ repository = "https://github.com/gourlaysama/thumbs"
 license.workspace = true
 
 [dependencies]
-dirs = "6"
+etcetera = "0.11"
 globset = { workspace = true }
 log = { workspace = true }
 md5 = "0.8"

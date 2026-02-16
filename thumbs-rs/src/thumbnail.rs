@@ -113,7 +113,7 @@ impl Thumbnail {
 
     pub fn is_stale(&self) -> TResult<bool> {
         let path = self.source_uri.to_file_path().unwrap();
-        if !path.exists() {
+        if !path.exists() || !self.inner.exists() {
             return Ok(true);
         }
 

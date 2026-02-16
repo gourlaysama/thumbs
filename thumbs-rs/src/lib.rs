@@ -51,16 +51,7 @@ impl ThumbnailCache {
             thumb_path.push(format!("{digest:x}"));
             thumb_path.set_extension("png");
             if thumb_path.exists() {
-                let thumb = Thumbnail::from_path(&thumb_path)?;
-                match thumb.is_stale() {
-                    Ok(true) => {
-                        debug!("  Found      {:?}", thumb_path);
-                    }
-                    Ok(false) => thumbs.push(thumb),
-                    Err(e) => {
-                        trace!("Ignoring error '{e}' for {}", thumb_path.to_string_lossy())
-                    }
-                }
+                thumbs.push(Thumbnail::from_path(&thumb_path)?);
             }
         }
 

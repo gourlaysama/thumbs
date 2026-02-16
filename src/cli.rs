@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::Result;
 use clap::{ArgAction, ValueHint, builder::styling};
 use log::LevelFilter;
 use std::{path::PathBuf, time::SystemTime};
@@ -114,6 +114,7 @@ pub enum Command {
     },
 }
 
+#[cfg(not_build_rs)]
 fn parse_last_accessed(s: &str) -> Result<SystemTime> {
     if let Ok(t) = humantime::parse_rfc3339_weak(s) {
         return Ok(t);
@@ -123,5 +124,11 @@ fn parse_last_accessed(s: &str) -> Result<SystemTime> {
         return Ok(SystemTime::now() - d);
     }
 
-    bail!("Cannot parse '{s}' as either a RFC3339-like timestamp or a free-form duration");
+    anyhow::bail!("Cannot parse '{s}' as either a RFC3339-like timestamp or a free-form duration");
+}
+
+// this is to avoid a build-dependency on humantime, this is not actually called at build time
+#[cfg(not(not_build_rs))]
+fn parse_last_accessed(_s: &str) -> Result<SystemTime> {
+    Ok(SystemTime::UNIX_EPOCH)
 }

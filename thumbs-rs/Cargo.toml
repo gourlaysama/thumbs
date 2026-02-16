@@ -19,7 +19,7 @@ percent-encoding = "2.3.2"
 png_pong = "0.10"
 thiserror = "2"
 url = "2"
-walkdir = "2"
+walkdir = "2.2.2"
 
 [lints]
 workspace = true

@@ -9,9 +9,9 @@ license = "Apache-2.0"
 
 # Global dependencies
 [workspace.dependencies]
-anyhow = "1"
 globset = "0.4"
 log = "0.4"
+clap = { version = "4.4.1", features = ["derive", "cargo", "wrap_help"] }
 
 [profile.release]
 lto = true
@@ -33,27 +33,23 @@ license.workspace = true
 readme = "README.md"
 
 [dependencies]
-anyhow = { workspace = true }
-clap = { version = "4", features = ["derive", "cargo", "wrap_help"] }
-env_logger = "0.11"
+anyhow = "1.0.22"
+clap = { workspace = true }
+env_logger = { version = "0.11", default-features = false, features = ["auto-color"]}
 globset = { workspace = true }
 humantime = "2"
 log = { workspace = true }
 serde = { version = "1", features = ["derive"] }
 url = "2"
-version_check = "0.9"
-walkdir = "2"
 thumbs-rs = { path = "thumbs-rs" }
 
 [build-dependencies]
 build-info-build = "0.0.42"
 anyhow = "1"
-clap = { version = "4", features = ["derive", "cargo", "wrap_help"] }
+clap = { workspace = true }
 clap_complete = "4"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-version_check = "0.9"
-humantime = "2"
 
 [package.metadata.deb]
 priority = "optional"

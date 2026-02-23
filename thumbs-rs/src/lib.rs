@@ -1,17 +1,17 @@
 /*!
  * **Thumbnail management library for systems respecting [Freedesktop's Thumbnail Management Standard](https://specifications.freedesktop.org/thumbnail/latest/index.html)**
- * 
+ *
  * # Example
- * 
+ *
  * ```
  * use std::env
  * use std::path::Path
  * use thumbs_rs::ThumbnailCache
- * 
+ *
  * fn main() -> Result<()> {
  *      let path = env::args.next().unwrap();
  *      let cache = ThumbnailCache::init()?;
- * 
+ *
  *      for thumbnail in cache.find_thumbnails_for_file(&path)? {
  *          println!("found: {:?}", thumbnail.path())
  *          if thumbnail.is_stale()? {
@@ -46,7 +46,7 @@ pub mod thumbnail;
 type TResult<T> = Result<T, ThumbnailError>;
 
 /// The thumbnail cache.
-/// 
+///
 /// This is the entry point for all operations on thumbnails.
 pub struct ThumbnailCache {
     cache_locations: Vec<PathBuf>,
@@ -67,7 +67,7 @@ impl ThumbnailCache {
     }
 
     /// Returns the cache locations of this [`ThumbnailCache`].
-    /// 
+    ///
     /// This includes the directories used to cache the placeholder thumbnails used when thumbnail
     /// generation failed.
     pub fn cache_locations(&self) -> impl Iterator<Item = &Path> {

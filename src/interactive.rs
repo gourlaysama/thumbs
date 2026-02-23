@@ -32,7 +32,7 @@ where
             let mut out = out.lock();
             writeln!(out, "Found thumbnails for:")?;
             for p in thumbnails {
-                writeln!(out, "{}", p.path().to_string_lossy())?;
+                writeln!(out, "{}", p.path().display())?;
             }
             out.flush()?;
         } else {

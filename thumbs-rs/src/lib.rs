@@ -162,10 +162,7 @@ impl ThumbnailCache {
                     let metadata = match entry.metadata() {
                         Ok(m) => m,
                         Err(e) => {
-                            debug!(
-                                "Failed to find metadata of {}",
-                                entry.path().to_string_lossy()
-                            );
+                            debug!("Failed to find metadata of {}", entry.path().display());
                             trace!("Failed with: {e}");
                             continue;
                         }
@@ -174,9 +171,12 @@ impl ThumbnailCache {
                     let acc_t = match metadata.accessed() {
                         Ok(a) => a,
                         Err(_) => {
-                            debug!("No accesstime available, ignoring {}", entry.path().display());
-                            continue
-                        },
+                            debug!(
+                                "No accesstime available, ignoring {}",
+                                entry.path().display()
+                            );
+                            continue;
+                        }
                     };
 
                     if acc_t >= last_accessed {
@@ -379,7 +379,7 @@ fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
     if log_enabled!(log::Level::Debug) {
         debug!("Will look for thumbnails in the following directories:");
         for loc in &locations {
-            debug!("  {}", loc.to_string_lossy());
+            debug!("  {}", loc.display());
         }
     }
 

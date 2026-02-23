@@ -147,6 +147,7 @@ impl ThumbnailCache {
             }
 
             for entry in walk
+                .follow_links(true)
                 .into_iter()
                 .filter_entry(|e| hidden || !is_hidden_unix(e.file_name()))
                 .filter_map(|e| e.ok())

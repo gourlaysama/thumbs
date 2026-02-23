@@ -137,17 +137,21 @@ impl ThumbnailCache {
 
         for path in paths.iter() {
             if path.is_file() {
+                if let Some(last_accessed) = last_accessed {
+                    if is_atime_younger_than(path, last_accessed) {
+                        continue;
+                    }
+                };
                 thumbnails.extend(self.find_thumbnails_for_file(path.as_path())?);
                 continue;
             }
 
-            let mut walk = WalkDir::new(path).min_depth(1);
+            let mut walk = WalkDir::new(path).min_depth(1).follow_links(true);
             if !recursive {
                 walk = walk.max_depth(1);
             }
 
             for entry in walk
-                .follow_links(true)
                 .into_iter()
                 .filter_entry(|e| hidden || !is_hidden_unix(e.file_name()))
                 .filter_map(|e| e.ok())
@@ -159,27 +163,7 @@ impl ThumbnailCache {
                         continue;
                     }
                 } else if let Some(last_accessed) = last_accessed {
-                    let metadata = match entry.metadata() {
-                        Ok(m) => m,
-                        Err(e) => {
-                            debug!("Failed to find metadata of {}", entry.path().display());
-                            trace!("Failed with: {e}");
-                            continue;
-                        }
-                    };
-
-                    let acc_t = match metadata.accessed() {
-                        Ok(a) => a,
-                        Err(_) => {
-                            debug!(
-                                "No accesstime available, ignoring {}",
-                                entry.path().display()
-                            );
-                            continue;
-                        }
-                    };
-
-                    if acc_t >= last_accessed {
+                    if is_atime_younger_than(entry.path(), last_accessed) {
                         continue;
                     }
                 };
@@ -389,4 +373,25 @@ fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
 fn is_hidden_unix(str: &OsStr) -> bool {
     let c: char = str.as_bytes()[0].into();
     c == '.'
+}
+
+fn is_atime_younger_than(path: &Path, last_accessed: SystemTime) -> bool {
+    let metadata = match path.metadata() {
+        Ok(m) => m,
+        Err(e) => {
+            debug!("Failed to find metadata of {}", path.display());
+            trace!("Failed with: {e}");
+            return false;
+        }
+    };
+
+    let acc_t = match metadata.accessed() {
+        Ok(a) => a,
+        Err(_) => {
+            debug!("No accesstime available, ignoring {}", path.display());
+            return false;
+        }
+    };
+
+    acc_t >= last_accessed
 }

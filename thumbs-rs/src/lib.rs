@@ -171,9 +171,13 @@ impl ThumbnailCache {
                         }
                     };
 
-                    let acc_t = metadata
-                        .accessed()
-                        .expect("never happens on supported platforms");
+                    let acc_t = match metadata.accessed() {
+                        Ok(a) => a,
+                        Err(_) => {
+                            debug!("No accesstime available, ignoring {}", entry.path().display());
+                            continue
+                        },
+                    };
 
                     if acc_t >= last_accessed {
                         continue;

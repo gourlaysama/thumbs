@@ -1,3 +1,28 @@
+/*!
+ * **Thumbnail management library for systems respecting [Freedesktop's Thumbnail Management Standard](https://specifications.freedesktop.org/thumbnail/latest/index.html)**
+ * 
+ * # Example
+ * 
+ * ```
+ * use std::env
+ * use std::path::Path
+ * use thumbs_rs::ThumbnailCache
+ * 
+ * fn main() -> Result<()> {
+ *      let path = env::args.next().unwrap();
+ *      let cache = ThumbnailCache::init()?;
+ * 
+ *      for thumbnail in cache.find_thumbnails_for_file(&path)? {
+ *          println!("found: {:?}", thumbnail.path())
+ *          if thumbnail.is_stale()? {
+ *              println!("thumbnail is not up to date, deleting...")
+ *              thumbnail.delete()?;
+ *          }
+ *      }
+ * }
+ * ```
+ */
+
 use etcetera::{BaseStrategy, base_strategy::Xdg};
 use globset::{Candidate, GlobSet};
 use log::*;
@@ -20,22 +45,41 @@ pub mod thumbnail;
 
 type TResult<T> = Result<T, ThumbnailError>;
 
+/// The thumbnail cache.
+/// 
+/// This is the entry point for all operations on thumbnails.
 pub struct ThumbnailCache {
     cache_locations: Vec<PathBuf>,
 }
 
 // public methods
 impl ThumbnailCache {
+    /// Find the thumbnail cache for the current user.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the home directory is unknown or if the cache location
+    /// is inaccessible.
     pub fn init() -> Result<Self, io::Error> {
         Ok(ThumbnailCache {
             cache_locations: find_cache_locations()?,
         })
     }
 
+    /// Returns the cache locations of this [`ThumbnailCache`].
+    /// 
+    /// This includes the directories used to cache the placeholder thumbnails used when thumbnail
+    /// generation failed.
     pub fn cache_locations(&self) -> impl Iterator<Item = &Path> {
         self.cache_locations.iter().map(PathBuf::as_path)
     }
 
+    /// Finds all the thumbnails for a file at the given path.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the file path is invalid, does not exists of cannot
+    /// be resolved.
     pub fn find_thumbnails_for_file(
         &self,
         path: &Path,
@@ -51,16 +95,39 @@ impl ThumbnailCache {
             thumb_path.push(format!("{digest:x}"));
             thumb_path.set_extension("png");
             if thumb_path.exists() {
-                thumbs.push(Thumbnail::from_path(&thumb_path)?);
+                match Thumbnail::from_path(&thumb_path) {
+                    Ok(t) => thumbs.push(t),
+                    Err(e) => {
+                        debug!(
+                            "Thumbnail {} exists but is invalid: {e}",
+                            thumb_path.display()
+                        )
+                    }
+                }
             }
         }
 
         Ok(thumbs.into_iter())
     }
 
+    /// Finds all the thumbnails for the given files and for files within the given directories.
+    ///
+    /// If an input path is a file, this appends the results of [`find_thumbnail_for_file`] to the output.
+    ///
+    /// If an input path is a directory, it appends the results of [`find_thumbnail_for_file`] to the output
+    /// for all files within. Hidden files are included if `hidden` is set. Directories further down will
+    /// only be searched if `recursive` is set.
+    ///
+    /// When a timestamp is provided in `last_accessed`, only thumbnails for files with an older access
+    /// time will be returned.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if any of the paths are invalid, do not exists or cannot
+    /// be resolved.
     pub fn find_thumbnails_for_files_in(
         &self,
-        files: &[PathBuf],
+        paths: &[PathBuf],
         last_accessed: Option<SystemTime>,
         recursive: bool,
         hidden: bool,
@@ -68,7 +135,7 @@ impl ThumbnailCache {
         let mut thumbnails: Vec<Thumbnail> = Vec::new();
         let mut nb_ignore_dirs = 0;
 
-        for path in files.iter() {
+        for path in paths.iter() {
             if path.is_file() {
                 thumbnails.extend(self.find_thumbnails_for_file(path.as_path())?);
                 continue;
@@ -122,6 +189,15 @@ impl ThumbnailCache {
         })
     }
 
+    /// Finds all thumbnails in the cache whose files are missing.
+    ///
+    /// Search through the entire thumbnail cache for thumbnails whose corresponding file is missing.
+    /// The `exclude` and `include` globsets are checked in that order against the thumbnail's
+    /// corresponding file.
+    /// 
+    /// # Errors
+    ///
+    /// This function will return an error if .
     pub fn find_thumbnails_for_missing_files(
         &self,
         exclude: &GlobSet,

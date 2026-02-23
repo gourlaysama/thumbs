@@ -21,6 +21,12 @@ pub struct Thumbnail {
 }
 
 impl Thumbnail {
+    /// Constructs a `Thumbnail` from the path to the underlying PNG thumbnail file.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if it cannot parse the thumbnail. See
+    /// [`ThumbnailErrorSource`] for potential reasons.
     pub fn from_path(path: &Path) -> TResult<Thumbnail> {
         // TODO is canonicalize too much? (it resolves symlinks)
         let inner = if !path.is_absolute() {

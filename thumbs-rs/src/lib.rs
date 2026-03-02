@@ -206,10 +206,7 @@ impl ThumbnailCache {
                 trace!("Processing {path:?}");
 
                 let thumb = Thumbnail::from_path(path)?;
-                let origin_path = thumb
-                    .source_uri()
-                    .to_file_path()
-                    .expect("currently required, should never happen");
+                let origin_path = thumb.path();
                 let glob_candidate = Candidate::new(&origin_path);
                 if !exclude.is_match_candidate(&glob_candidate)
                     && include.is_match_candidate(&glob_candidate)

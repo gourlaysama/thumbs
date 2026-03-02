@@ -183,15 +183,11 @@ impl ThumbnailCache {
     /// Search through the entire thumbnail cache for thumbnails whose corresponding file is missing.
     /// The `exclude` and `include` globsets are checked in that order against the thumbnail's
     /// corresponding file.
-    /// 
-    /// # Errors
-    ///
-    /// This function will return an error if .
     pub fn find_thumbnails_for_missing_files(
         &self,
         exclude: &GlobSet,
         include: &GlobSet,
-    ) -> TResult<impl Iterator<Item = Thumbnail>> {
+    ) -> impl Iterator<Item = Thumbnail> {
         let mut thumbs = Vec::new();
         for location in &self.cache_locations {
             for entry in WalkDir::new(location)
@@ -205,7 +201,13 @@ impl ThumbnailCache {
                 let path = entry.path();
                 trace!("Processing {path:?}");
 
-                let thumb = Thumbnail::from_path(path)?;
+                let thumb = match Thumbnail::from_path(path) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        debug!("Thumbnail {} exists but is invalid: {e}", path.display());
+                        continue;
+                    }
+                };
                 let origin_path = thumb.path();
                 let glob_candidate = Candidate::new(&origin_path);
                 if !exclude.is_match_candidate(&glob_candidate)
@@ -217,7 +219,7 @@ impl ThumbnailCache {
             }
         }
 
-        Ok(thumbs.into_iter())
+        thumbs.into_iter()
     }
 }
 

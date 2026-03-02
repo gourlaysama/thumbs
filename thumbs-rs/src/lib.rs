@@ -178,15 +178,18 @@ impl ThumbnailCache {
         })
     }
 
-    /// Finds all thumbnails in the cache whose files are missing.
+    /// Search all thumbnails in the cache.
     ///
-    /// Search through the entire thumbnail cache for thumbnails whose corresponding file is missing.
-    /// The `exclude` and `include` globsets are checked in that order against the thumbnail's
-    /// corresponding file.
-    pub fn find_thumbnails_for_missing_files(
+    /// A thumbnail is only returned if the corresponding file is not in the `exclude` globset and
+    /// is in the `include` globset, in that order.
+    /// 
+    /// If `stale` is set, a thumbnail is only returned if the corresponding file has changed since
+    /// the thumbnail was generated, including if it is now missing. See [`Thumbnail::is_stale`].
+    pub fn search_thumbnails(
         &self,
         exclude: &GlobSet,
         include: &GlobSet,
+        stale: bool,
     ) -> impl Iterator<Item = Thumbnail> {
         let mut thumbs = Vec::new();
         for location in &self.cache_locations {
@@ -212,9 +215,10 @@ impl ThumbnailCache {
                 let glob_candidate = Candidate::new(&origin_path);
                 if !exclude.is_match_candidate(&glob_candidate)
                     && include.is_match_candidate(&glob_candidate)
-                    && !origin_path.exists()
                 {
-                    thumbs.push(thumb);
+                    if !stale || thumb.is_stale().unwrap_or(false) {
+                        thumbs.push(thumb);
+                    }
                 }
             }
         }

@@ -9,7 +9,7 @@ use crate::{cached_delete, interactive::user_prompt, show};
 pub fn run(force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<bool> {
     let c = ThumbnailCache::init()?;
     let thumbs: Vec<_> = c
-        .find_thumbnails_for_missing_files(exclude, include)
+        .search_thumbnails(exclude, include, true)
         .collect();
     let nb_thumbs = thumbs.len();
 

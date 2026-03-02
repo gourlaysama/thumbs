@@ -12,6 +12,7 @@ use url::Url;
 
 use crate::{TResult, ThumbnailError, ThumbnailErrorSource};
 
+/// A thumbnail file.
 #[derive(Debug)]
 pub struct Thumbnail {
     inner: PathBuf,
@@ -21,7 +22,7 @@ pub struct Thumbnail {
 }
 
 impl Thumbnail {
-    /// Constructs a `Thumbnail` from the path to the underlying PNG thumbnail file.
+    /// Constructs a [`Thumbnail`] from the path to the underlying PNG thumbnail file.
     ///
     /// # Errors
     ///
@@ -117,6 +118,17 @@ impl Thumbnail {
         })
     }
 
+    /// Returns true if this thumbnail's corresponding file has changed since the thumbnail was generated.
+    ///
+    /// The file is considered to have changed if any of:
+    ///   - it does not exist anymore,
+    ///   - its size is different than the one recorded in this thumbnail's metadata,
+    ///   - its last modified time is different than the one recorded in this thumbnail's metadata.
+    ///
+    /// Errors
+    ///
+    /// This function will return an error if it doesn't have permissions to access the corresponding file's
+    /// metadata.
     pub fn is_stale(&self) -> TResult<bool> {
         let path = self.source_uri.to_file_path().unwrap();
         if !path.exists() || !self.inner.exists() {
@@ -148,11 +160,21 @@ impl Thumbnail {
         Ok(false)
     }
 
+    /// Deletes this [`Thumbnail`].
+    /// 
+    /// This is essentially a wrapper for [`std::fs::remove_file`].
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the underlying file cannot be removed.
     pub fn delete(&self) -> TResult<()> {
         Ok(std::fs::remove_file(&self.inner)
             .map_err(|e| ThumbnailErrorSource::Io(e).with_path(self.inner.clone()))?)
     }
 
+    /// Returns the uri for this [`Thumbnail`]'s corresponding file.
+    /// 
+    /// This is currently guarrantied to be a `file` uri.
     pub fn source_uri(&self) -> &Url {
         &self.source_uri
     }

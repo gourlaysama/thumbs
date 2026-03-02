@@ -68,7 +68,7 @@ impl ThumbnailCache {
 
     /// Returns the cache locations of this [`ThumbnailCache`].
     ///
-    /// This includes the directories used to cache the placeholder thumbnails used when thumbnail
+    /// This includes the directories for the placeholder thumbnails used when thumbnail
     /// generation failed.
     pub fn cache_locations(&self) -> impl Iterator<Item = &Path> {
         self.cache_locations.iter().map(PathBuf::as_path)
@@ -112,13 +112,13 @@ impl ThumbnailCache {
 
     /// Finds all the thumbnails for the given files and for files within the given directories.
     ///
-    /// If an input path is a file, this appends the results of [`find_thumbnail_for_file`] to the output.
+    /// If an input path is a file, this appends the results of [`ThumbnailCache::find_thumbnails_for_file`] to the output.
     ///
-    /// If an input path is a directory, it appends the results of [`find_thumbnail_for_file`] to the output
+    /// If an input path is a directory, it appends the results of [`ThumbnailCache::find_thumbnails_for_file`] to the output
     /// for all files within. Hidden files are included if `hidden` is set. Directories further down will
     /// only be searched if `recursive` is set.
     ///
-    /// When a timestamp is provided in `last_accessed`, only thumbnails for files with an older access
+    /// If a timestamp is provided in `last_accessed`, only thumbnails for files with an older access
     /// time will be returned.
     ///
     /// # Errors

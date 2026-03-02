@@ -138,22 +138,21 @@ impl Thumbnail {
         let metadata = path
             .metadata()
             .map_err(|e| ThumbnailError::from(self.path(), e.into()))?;
-        if let Some(m_time) = self.m_time {
-            if m_time
-                != metadata
-                    .modified()
-                    .expect("never happens on supported platforms")
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .expect("UNIX_EPOCH can never be earlier than anything")
-                    .as_secs()
-            {
+        if let Some(size) = self.size {
+            if size != metadata.size() {
                 return Ok(true);
             }
         }
 
-        if let Some(size) = self.size {
-            if size != metadata.size() {
-                return Ok(true);
+        if let Some(m_time) = self.m_time {
+            if let Ok(file_m_time) = metadata.modified() {
+                let file_m_time = file_m_time
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                if file_m_time != m_time {
+                    return Ok(true);
+                }
             }
         }
 

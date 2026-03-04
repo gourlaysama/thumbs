@@ -182,7 +182,7 @@ impl ThumbnailCache {
     ///
     /// A thumbnail is only returned if the corresponding file is not in the `exclude` globset and
     /// is in the `include` globset, in that order.
-    /// 
+    ///
     /// If `stale` is set, a thumbnail is only returned if the corresponding file has changed since
     /// the thumbnail was generated, including if it is now missing. See [`Thumbnail::is_stale`].
     pub fn search_thumbnails(
@@ -207,7 +207,8 @@ impl ThumbnailCache {
                 let thumb = match Thumbnail::from_path(path) {
                     Ok(t) => t,
                     Err(e) => {
-                        debug!("Thumbnail {} exists but is invalid: {e}", path.display());
+                        debug!("{e}, skipping");
+                        trace!("caused by: {}", e.source);
                         continue;
                     }
                 };

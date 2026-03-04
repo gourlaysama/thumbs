@@ -212,13 +212,14 @@ impl ThumbnailCache {
                         continue;
                     }
                 };
-                let origin_path = thumb.path();
-                let glob_candidate = Candidate::new(&origin_path);
-                if !exclude.is_match_candidate(&glob_candidate)
-                    && include.is_match_candidate(&glob_candidate)
-                {
-                    if !stale || thumb.is_stale().unwrap_or(false) {
-                        thumbs.push(thumb);
+                if let Ok(origin_path) = thumb.source_uri().to_file_path() {
+                    let glob_candidate = Candidate::new(&origin_path);
+                    if !exclude.is_match_candidate(&glob_candidate)
+                        && include.is_match_candidate(&glob_candidate)
+                    {
+                        if !stale || thumb.is_stale().unwrap_or(false) {
+                            thumbs.push(thumb);
+                        }
                     }
                 }
             }

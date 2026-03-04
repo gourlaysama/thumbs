@@ -32,7 +32,9 @@ where
             let mut out = out.lock();
             writeln!(out, "Found thumbnails for:")?;
             for p in thumbnails {
-                writeln!(out, "{}", p.path().display())?;
+                if let Ok(f) = p.source_uri().to_file_path() {
+                    writeln!(out, "{}", f.display())?;
+                }
             }
             out.flush()?;
         } else {

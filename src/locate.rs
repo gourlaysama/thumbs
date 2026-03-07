@@ -1,9 +1,8 @@
 use std::path::Path;
 
 use anyhow::Result;
+use log::*;
 use thumbs_rs::ThumbnailCache;
-
-use crate::show;
 
 pub fn run(file: &Path) -> Result<bool> {
     let cache = ThumbnailCache::init()?;
@@ -12,7 +11,12 @@ pub fn run(file: &Path) -> Result<bool> {
 
     for t in thumbnails {
         empty = false;
-        show!("{}", t.path().display());
+        println!("{}", t.path().display());
     }
+
+    if empty {
+        warn!("Found no thumbnails.");
+    }
+
     Ok(!empty)
 }

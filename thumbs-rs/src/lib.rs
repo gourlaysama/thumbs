@@ -86,7 +86,8 @@ impl ThumbnailCache {
     ) -> TResult<impl Iterator<Item = Thumbnail>> {
         let encoded_path = make_encoded_uri(path)?;
         let digest = md5::compute(encoded_path.as_bytes());
-        debug!("Processing {path:?} ({digest:x})");
+        debug!("Looking at {path:?} ({digest:x})");
+        trace!("Looking for thumbnail pointing to {encoded_path}");
 
         let mut thumbs = Vec::new();
 
@@ -97,12 +98,7 @@ impl ThumbnailCache {
             if thumb_path.exists() {
                 match Thumbnail::from_path(&thumb_path) {
                     Ok(t) => thumbs.push(t),
-                    Err(e) => {
-                        debug!(
-                            "Thumbnail {} exists but is invalid: {e}",
-                            thumb_path.display()
-                        )
-                    }
+                    Err(e) => debug!("{e}"),
                 }
             }
         }
@@ -230,7 +226,7 @@ impl ThumbnailCache {
 }
 
 #[derive(Debug, Error)]
-#[error("error processing thumbnail at {path}")]
+#[error("wrong thumbnail at {path}: {source}")]
 pub struct ThumbnailError {
     path: PathBuf,
     source: ThumbnailErrorSource,
@@ -332,7 +328,6 @@ fn make_encoded_uri(path: &Path) -> TResult<String> {
     let mut url = String::new();
     url.push_str("file://");
     url.extend(percent_encode(inner.as_bytes(), &CUSTOM_ENCODING_SET));
-    trace!("Encoded Url: {url:?}");
 
     Ok(url)
 }
@@ -360,15 +355,13 @@ fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
             .filter_entry(|e| e.file_type().is_dir())
             .filter_map(|e| e.ok())
         {
-            trace!("entry: {entry:?}");
             locations.push(entry.into_path());
         }
     }
 
     if log_enabled!(log::Level::Debug) {
-        debug!("Will look for thumbnails in the following directories:");
         for loc in &locations {
-            debug!("  {}", loc.display());
+            debug!(" Found cache directory at: {}", loc.display());
         }
     }
 

@@ -48,21 +48,15 @@ pub struct ProgramOptions {
 }
 
 impl ProgramOptions {
-    pub fn log_level_with_default(&self, default: i16) -> Option<LevelFilter> {
+    pub fn log_level_with_default(&self, default: i16) -> LevelFilter {
         let level = default + self.verbose as i16 - self.quiet as i16;
-        let new_level = match level {
+        match level {
             i16::MIN..=0 => LevelFilter::Off,
             1 => LevelFilter::Error,
             2 => LevelFilter::Warn,
             3 => LevelFilter::Info,
             4 => LevelFilter::Debug,
             5..=i16::MAX => LevelFilter::Trace,
-        };
-
-        if level != default {
-            Some(new_level)
-        } else {
-            None
         }
     }
 }

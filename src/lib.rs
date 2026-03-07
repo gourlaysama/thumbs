@@ -1,4 +1,8 @@
+use anyhow::Result;
+use cli::Command;
+use globset::{Glob, GlobSetBuilder};
 use log::*;
+use std::{io::IsTerminal, sync::LazyLock};
 
 use thumbs_rs::Thumbnail;
 
@@ -7,7 +11,6 @@ pub mod cli;
 pub mod delete;
 pub mod interactive;
 pub mod locate;
-
 
 pub(crate) fn cached_delete(thumbnails: &[Thumbnail]) {
     for p in thumbnails {
@@ -18,20 +21,58 @@ pub(crate) fn cached_delete(thumbnails: &[Thumbnail]) {
     }
 
     show!("Deleted {} thumbnail(s).", thumbnails.len());
-    ()
 }
 
+pub static STDOUT_IS_TERMINAL: LazyLock<bool> = LazyLock::new(|| std::io::stdout().is_terminal());
+
+pub fn run(cmd: Command) -> Result<bool> {
+    let changed = match cmd {
+        Command::Cleanup { force, glob } => {
+            let mut builder_exclude = GlobSetBuilder::new();
+            let mut builder_include = GlobSetBuilder::new();
+            let mut include_all = true;
+            for g in glob {
+                if g.starts_with('!') {
+                    builder_exclude.add(Glob::new(g.strip_prefix('!').unwrap())?);
+                } else {
+                    include_all = false;
+                    builder_include.add(Glob::new(&g)?);
+                }
+            }
+            if include_all {
+                builder_include.add(Glob::new("**")?);
+            }
+            let set_exclude = builder_exclude.build()?;
+            let set_include = builder_include.build()?;
+
+            cleanup::run(force, &set_exclude, &set_include)?
+        }
+        Command::Delete {
+            recursive,
+            force,
+            files,
+            last_accessed,
+            all,
+        } => delete::run(files.as_ref(), force, last_accessed, recursive, all)?,
+        Command::Locate { file } => locate::run(&file)?,
+    };
+
+    if !changed {
+        show!("Nothing to do.")
+    }
+
+    Ok(changed)
+}
 
 #[macro_export]
 macro_rules! show {
-    ($level:ident, $($a:tt)*) => {
-        if log::log_enabled!(log::Level::$level) {
-            println!($($a)*);
-        }
-    };
     ($($a:tt)*) => {
-        if log::log_enabled!(log::Level::Error) {
-            println!($($a)*);
+        {
+            if *crate::STDOUT_IS_TERMINAL {
+                println!($($a)*);
+            } else {
+                log::info!($($a)*);
+            }
         }
     }
 }

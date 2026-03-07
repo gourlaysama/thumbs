@@ -35,7 +35,7 @@ readme = "README.md"
 [dependencies]
 anyhow = "1.0.22"
 clap = { workspace = true }
-env_logger = { version = "0.11", default-features = false, features = ["auto-color"]}
+flexi_logger = { version = "0.31", default-features = false, features = ["colors"]}
 globset = { workspace = true }
 humantime = "2"
 log = { workspace = true }

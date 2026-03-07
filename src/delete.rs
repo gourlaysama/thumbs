@@ -28,13 +28,18 @@ pub fn run(
         )
     }
     if thumbnail_count == 0 {
-        warn!("Found no thumbnails. Rerun with '-vv' for detailed information.")
+        warn!("Found no thumbnails.");
     } else if !force {
         if stdin().is_terminal() {
             return user_prompt(&results.thumbnail_paths, || {
                 cached_delete(&results.thumbnail_paths);
             });
         } else {
+            if log_enabled!(Level::Info) {
+                for p in results.thumbnail_paths {
+                    info!("Would delete {}", p.path().display());
+                }
+            }
             show!(
                 "Found {thumbnail_count} thumbnail(s) to delete. Use '-v' for details, or '-f/--force' to delete them."
             );

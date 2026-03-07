@@ -1,15 +1,10 @@
 use anyhow::Result;
 use clap::{CommandFactory, FromArgMatches};
-use env_logger::{Builder, Env};
-use globset::{Glob, GlobSetBuilder};
+use flexi_logger::LogSpecBuilder;
 use log::*;
 use std::process::{ExitCode, Termination};
 use thumbs::cli::{Command, ProgramOptions};
-use thumbs::{cleanup, locate, show};
-
-use thumbs::delete;
-
-const LOG_ENV_VAR: &str = "THUMBS_LOG";
+use thumbs::run;
 
 #[repr(u8)]
 pub enum ThumbsResult {
@@ -25,76 +20,50 @@ impl Termination for ThumbsResult {
 }
 
 fn main() -> ThumbsResult {
-    match run() {
+    match setup().and_then(run) {
         // Everything ok
         Ok(true) => ThumbsResult::OK,
         // Found nothing to do
         Ok(false) => ThumbsResult::NothingToDo,
         Err(e) => {
-            let causes = e.chain().skip(1);
-            if causes.len() != 0 {
-                if log_enabled!(Level::Info) {
-                    show!("Error: {e}");
-                    for cause in causes {
-                        info!("cause: {cause}");
-                    }
-                } else {
-                    show!("Error: {e}; rerun with '-v' for more information");
-                }
-            } else {
-                show!("Error: {e}");
+            error!("{e}");
+
+            for cause in e.chain().skip(1) {
+                error!("cause: {cause}");
             }
+
             ThumbsResult::Error
         }
     }
 }
 
-fn run() -> Result<bool> {
+fn setup() -> Result<Command> {
     let args_matches = ProgramOptions::command().get_matches();
     let args = ProgramOptions::from_arg_matches(&args_matches)?;
 
-    let mut b = Builder::default();
-    b.format_timestamp(None);
-    b.filter_level(LevelFilter::Warn); // default filter lever
-    b.parse_env(Env::from(LOG_ENV_VAR)); // override with env
-    // override with CLI option
-    if let Some(level) = args.log_level_with_default(2) {
-        b.filter_level(level);
-    };
-    b.try_init()?;
+    let mut log_spec = LogSpecBuilder::new();
+    log_spec.default(args.log_level_with_default(1));
+    log_spec.module("thumbs", args.log_level_with_default(2));
+    log_spec.module("thumbs_rs", args.log_level_with_default(2));
+    log_spec.module("thumbs_rs::thumbnail", args.log_level_with_default(1));
+
+    let mut logger = flexi_logger::Logger::try_with_str("trace")?;
+
+    match std::env::var("NO_COLOR") {
+        Ok(v) if v != "0" => {
+            logger = logger.format(flexi_logger::default_format);
+        }
+        _ => {
+            logger = logger.adaptive_format_for_stderr(flexi_logger::AdaptiveFormat::Default);
+        }
+    }
+
+    let _h = logger.start()?;
+    _h.set_new_spec(log_spec.finalize());
 
     let cmd = args
         .cmd
         .expect("unexpected command, should have been caught by clap.");
 
-    match cmd {
-        Command::Cleanup { force, glob } => {
-            let mut builder_exclude = GlobSetBuilder::new();
-            let mut builder_include = GlobSetBuilder::new();
-            let mut include_all = true;
-            for g in glob {
-                if g.starts_with('!') {
-                    builder_exclude.add(Glob::new(g.strip_prefix('!').unwrap())?);
-                } else {
-                    include_all = false;
-                    builder_include.add(Glob::new(&g)?);
-                }
-            }
-            if include_all {
-                builder_include.add(Glob::new("**")?);
-            }
-            let set_exclude = builder_exclude.build()?;
-            let set_include = builder_include.build()?;
-
-            cleanup::run(force, &set_exclude, &set_include)
-        }
-        Command::Delete {
-            recursive,
-            force,
-            files,
-            last_accessed,
-            all,
-        } => delete::run(files.as_ref(), force, last_accessed, recursive, all),
-        Command::Locate { file } => locate::run(&file),
-    }
+    Ok(cmd)
 }

@@ -91,6 +91,7 @@ impl Thumbnail {
         }
 
         let source_decoded = if let Some(u) = encoded_uri {
+            trace!("Decoding URI: {u}");
             percent_decode_str(&u)
                 .decode_utf8()
                 .map_err(|e| ThumbnailError::utf8_error(path.into(), e))?
@@ -98,6 +99,7 @@ impl Thumbnail {
         } else {
             return Err(ThumbnailErrorSource::MissingMetadata.with_path(path.into()));
         };
+        trace!("Decoded URI: {source_decoded}");
 
         let source_uri =
             Url::parse(&source_decoded).map_err(|e| ThumbnailError::url_error(path.into(), e))?;

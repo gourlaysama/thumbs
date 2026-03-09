@@ -11,12 +11,31 @@ pub mod cli;
 pub mod delete;
 pub mod interactive;
 pub mod locate;
+pub mod utils;
 
 pub(crate) fn cached_delete(thumbnails: &[Thumbnail]) {
-    for p in thumbnails {
-        match p.delete() {
-            Ok(_) => (),
-            Err(e) => warn!("{e}"),
+    if log::log_enabled!(Level::Debug) {
+        for p in thumbnails {
+            let uri = p.source_uri();
+            if uri.scheme() == "file" {
+                if let Ok(p) = uri.to_file_path() {
+                    debug!("Deleting thumbnail for {}", p.display());
+                } else {
+                    debug!("Deleting thumbnail for {}", uri);
+                }
+            } else {
+                debug!("Deleting thumbnail for {}", uri);
+            }
+
+            if let Err(e) = p.delete() {
+                warn!("{e}");
+            }
+        }
+    } else {
+        for p in thumbnails {
+            if let Err(e) = p.delete() {
+                warn!("{e}");
+            }
         }
     }
 

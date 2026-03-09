@@ -4,7 +4,7 @@ use flexi_logger::LogSpecBuilder;
 use log::*;
 use std::process::{ExitCode, Termination};
 use thumbs::cli::{Command, ProgramOptions};
-use thumbs::run;
+use thumbs::{run, utils};
 
 #[repr(u8)]
 pub enum ThumbsResult {
@@ -49,13 +49,18 @@ fn setup() -> Result<Command> {
 
     let mut logger = flexi_logger::Logger::try_with_str("trace")?;
 
-    match std::env::var("NO_COLOR") {
+    match std::env::var("THUMBS_SYSLOG_PREFIXED") {
         Ok(v) if v != "0" => {
-            logger = logger.format(flexi_logger::default_format);
+            logger = logger.format(utils::syslog_prefixed_format);
         }
-        _ => {
-            logger = logger.adaptive_format_for_stderr(flexi_logger::AdaptiveFormat::Default);
-        }
+        _ => match std::env::var("NO_COLOR") {
+            Ok(v) if v != "0" => {
+                logger = logger.format(utils::default_format);
+            }
+            _ => {
+                logger = logger.adaptive_format_for_stderr(utils::ADAPTIVE_LOG_FORMAT);
+            }
+        },
     }
 
     let _h = logger.start()?;

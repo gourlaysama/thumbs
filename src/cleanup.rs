@@ -1,6 +1,5 @@
 use anyhow::Result;
 use globset::GlobSet;
-use log::*;
 use std::io::{IsTerminal, stdin};
 use thumbs_rs::ThumbnailCache;
 
@@ -14,7 +13,7 @@ pub fn run(force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<bool> {
     let nb_thumbs = thumbs.len();
 
     if nb_thumbs == 0 {
-        warn!("Found no thumbnails to cleanup.")
+        show!("Found no thumbnails to cleanup.")
     } else if !force {
         if stdin().is_terminal() {
             return user_prompt(&thumbs, || cached_delete(&thumbs));
@@ -24,10 +23,7 @@ pub fn run(force: bool, exclude: &GlobSet, include: &GlobSet) -> Result<bool> {
             );
         }
     } else {
-        for t in thumbs {
-            t.delete()?;
-        }
-        show!("Deleted {nb_thumbs} thumbnail(s).");
+        cached_delete(&thumbs);
     }
 
     Ok(nb_thumbs != 0)

@@ -22,7 +22,7 @@ pub fn run(
     let thumbnail_count = results.thumbnail_paths.len();
 
     if results.ignored_directories != 0 {
-        warn!(
+        info!(
             "Ignoring {} folder(s). Enable '-r/--recursive' to recurse into directories.",
             results.ignored_directories
         )

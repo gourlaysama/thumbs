@@ -1,0 +1,10 @@
+[Unit]
+Description=Cleanup stale thumbnails timer
+
+[Timer]
+OnCalendar=daily
+AccuracySec=1h
+Persistent=yes
+
+[Install]
+WantedBy=timers.target

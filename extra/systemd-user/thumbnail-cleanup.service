@@ -1,0 +1,16 @@
+[Unit]
+Description=Cleanup stale thumbnails
+
+[Service]
+ExecStart=thumbs cleanup -v --force
+StandardError=journal
+SuccessExitStatus=0 125
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+Slice=background.slice
+RestrictAddressFamilies=none
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM

@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Antoine Gourlay <antoine@gourlay.fr>
+# Copyright (C) 2026 Antoine Gourlay <antoine@gourlay.fr>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 import os.path
 
 from gi import require_version
-require_version('Nautilus', '3.0')
 from gi.repository import Nautilus, GObject, Gio, GLib
 
 
@@ -29,19 +28,19 @@ class DeleteThumbnailsAction(GObject.GObject, Nautilus.MenuProvider):
         return paths
 
     def _make_menu(self, name, paths):
-        menu = Nautilus.MenuItem(name=name, label='Delete thumbnails', icon='edit-delete-symbolic')
+        menu = Nautilus.MenuItem(name=name, label='Delete thumbnails')
         menu.connect('activate', self._run_thumbs, paths)
         return menu
 
-    def get_file_items(self, window, files):
+    def get_file_items(self, files):
         paths = self._process_files(files)
         if paths:
             return [self._make_menu(name='ThumbsNautilus::delete_thumbs_for_files', paths=paths)]
         else:
             return []
 
-    def get_background_items(self, window, file):
-        paths = self._process_files([file])
+    def get_background_items(self, folder):
+        paths = self._process_files([folder])
         if paths:
             return [self._make_menu(name='ThumbsmNautilus::delete_thumbs_for_folder', paths=paths)]
         else:

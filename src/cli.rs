@@ -81,7 +81,7 @@ pub enum Command {
         /// Files whose thumbnails to delete
         files: Vec<PathBuf>,
 
-        /// Only delete thumbnails for files that haven't been accessed since the given time.
+        /// Only delete thumbnails for files that haven't been accessed in the given time.
         ///
         /// Can be either a RFC3339-like timestamp (`2020-01-01 11:10:00`) or a free-form
         /// duration like `1year 15days 1week 2min` or `1h 6s 2ms`.

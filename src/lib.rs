@@ -47,18 +47,24 @@ pub static STDOUT_IS_TERMINAL: LazyLock<bool> = LazyLock::new(|| std::io::stdout
 pub fn run(cmd: Command) -> Result<bool> {
     let changed = match cmd {
         Command::Cleanup { force, glob } => {
+            debug!("Cleanup with force={force}");
+
             let mut builder_exclude = GlobSetBuilder::new();
             let mut builder_include = GlobSetBuilder::new();
             let mut include_all = true;
             for g in glob {
                 if g.starts_with('!') {
-                    builder_exclude.add(Glob::new(g.strip_prefix('!').unwrap())?);
+                    let g = g.strip_prefix('!').unwrap();
+                    debug!("Excuding paths matching glob: {g}");
+                    builder_exclude.add(Glob::new(g)?);
                 } else {
                     include_all = false;
+                    debug!("Including paths matching glob: {g}");
                     builder_include.add(Glob::new(&g)?);
                 }
             }
             if include_all {
+                debug!("Including paths matching glob: **");
                 builder_include.add(Glob::new("**")?);
             }
             let set_exclude = builder_exclude.build()?;
@@ -74,6 +80,11 @@ pub fn run(cmd: Command) -> Result<bool> {
             all,
         } => {
             let files: Vec<PathBuf> = files.drain(..).map(|m| m.into_inner()).collect();
+            if log_enabled!(Level::Debug) {
+                for p in files.iter().by_ref() {
+                    debug!("Delete thumbnail for {}", p.display());
+                }
+            }
             delete::run(
                 files.iter().map(|p| p.as_path()),
                 force,
@@ -82,7 +93,11 @@ pub fn run(cmd: Command) -> Result<bool> {
                 all,
             )?
         }
-        Command::Locate { file } => locate::run(&file)?,
+        Command::Locate { file } => {
+            debug!("Locate thumbnail for {}", file.display());
+
+            locate::run(&file)?
+        }
     };
 
     if !changed {

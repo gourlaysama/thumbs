@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{ArgAction, ValueHint, builder::styling};
+use clap_stdin::MaybeStdin;
 use log::LevelFilter;
 use std::{path::PathBuf, time::SystemTime};
 
@@ -77,9 +78,13 @@ pub enum Command {
         /// Include hidden files and directories
         all: bool,
 
-        #[clap(value_parser = clap::value_parser!(PathBuf), value_hint(ValueHint::FilePath), value_name = "FILE")]
-        /// Files whose thumbnails to delete
-        files: Vec<PathBuf>,
+        #[clap(value_parser = clap::value_parser!(MaybeStdin<PathBuf>), value_hint(ValueHint::FilePath), value_name = "FILE")]
+        /// Files whose thumbnails to delete, or `-` for reading a file path from standard input.
+        /// 
+        /// Multiple paths can be given, but only a single one can use `-` for standard input. Whatever
+        /// can be read over standard input will be treated as a single path; use `xargs` or similar to
+        /// programatically giving multiple paths.
+        files: Vec<MaybeStdin<PathBuf>>,
 
         /// Only delete thumbnails for files that haven't been accessed in the given time.
         ///

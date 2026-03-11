@@ -2,7 +2,7 @@ use anyhow::Result;
 use cli::Command;
 use globset::{Glob, GlobSetBuilder};
 use log::*;
-use std::{io::IsTerminal, sync::LazyLock};
+use std::{io::IsTerminal, path::PathBuf, sync::LazyLock};
 
 use thumbs_rs::Thumbnail;
 
@@ -69,10 +69,11 @@ pub fn run(cmd: Command) -> Result<bool> {
         Command::Delete {
             recursive,
             force,
-            files,
+            mut files,
             last_accessed,
             all,
         } => {
+            let files: Vec<PathBuf> = files.drain(..).map(|m| m.into_inner()).collect();
             delete::run(
                 files.iter().map(|p| p.as_path()),
                 force,

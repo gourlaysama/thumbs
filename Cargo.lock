@@ -241,6 +241,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "clap-stdin"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c597a504c7d12819c50d2e1f78719afb6e01d4e14cbc94eb4c5f6a850494d1c"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
 name = "clap_builder"
 version = "4.5.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -678,7 +687,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -981,6 +990,7 @@ dependencies = [
  "anyhow",
  "build-info-build",
  "clap",
+ "clap-stdin",
  "clap_complete",
  "flexi_logger",
  "globset",

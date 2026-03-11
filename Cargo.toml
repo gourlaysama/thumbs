@@ -35,6 +35,7 @@ readme = "README.md"
 [dependencies]
 anyhow = "1.0.22"
 clap = { workspace = true }
+clap-stdin = "0.8"
 flexi_logger = { version = "0.31", default-features = false, features = ["colors"]}
 globset = { workspace = true }
 humantime = "2"
@@ -48,6 +49,7 @@ build-info-build = "0.0.42"
 anyhow = "1"
 clap = { workspace = true }
 clap_complete = "4"
+clap-stdin = "0.8"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 

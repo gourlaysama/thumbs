@@ -121,24 +121,27 @@ impl ThumbnailCache {
     ///
     /// This function will return an error if any of the paths are invalid, do not exists or cannot
     /// be resolved.
-    pub fn find_thumbnails_for_files_in(
+    pub fn find_thumbnails_for_files_in<'p, T>(
         &self,
-        paths: &[PathBuf],
+        paths: T,
         last_accessed: Option<SystemTime>,
         recursive: bool,
         hidden: bool,
-    ) -> TResult<SearchResults> {
+    ) -> TResult<SearchResults>
+    where
+        T: IntoIterator<Item = &'p Path>,
+    {
         let mut thumbnails: Vec<Thumbnail> = Vec::new();
         let mut nb_ignore_dirs = 0;
 
-        for path in paths.iter() {
+        for path in paths {
             if path.is_file() {
                 if let Some(last_accessed) = last_accessed {
                     if is_atime_younger_than(path, last_accessed) {
                         continue;
                     }
                 };
-                thumbnails.extend(self.find_thumbnails_for_file(path.as_path())?);
+                thumbnails.extend(self.find_thumbnails_for_file(path)?);
                 continue;
             }
 

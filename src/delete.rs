@@ -2,7 +2,7 @@ use anyhow::Result;
 use log::*;
 use std::{
     io::{IsTerminal, stdin},
-    path::PathBuf,
+    path::Path,
     time::SystemTime,
 };
 use thumbs_rs::ThumbnailCache;
@@ -10,13 +10,16 @@ use thumbs_rs::ThumbnailCache;
 use crate::interactive::user_prompt;
 use crate::{cached_delete, show};
 
-pub fn run(
-    files: &[PathBuf],
+pub fn run<'p, T>(
+    files: T,
     force: bool,
     last_accessed: Option<SystemTime>,
     recursive: bool,
     hidden: bool,
-) -> Result<bool> {
+) -> Result<bool>
+where
+    T: IntoIterator<Item = &'p Path>,
+{
     let c = ThumbnailCache::init()?;
     let results = c.find_thumbnails_for_files_in(files, last_accessed, recursive, hidden)?;
     let thumbnail_count = results.thumbnail_paths.len();

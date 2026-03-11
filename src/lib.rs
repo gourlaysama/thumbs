@@ -72,7 +72,15 @@ pub fn run(cmd: Command) -> Result<bool> {
             files,
             last_accessed,
             all,
-        } => delete::run(files.as_ref(), force, last_accessed, recursive, all)?,
+        } => {
+            delete::run(
+                files.iter().map(|p| p.as_path()),
+                force,
+                last_accessed,
+                recursive,
+                all,
+            )?
+        }
         Command::Locate { file } => locate::run(&file)?,
     };
 

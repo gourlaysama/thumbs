@@ -111,6 +111,10 @@ pub enum Command {
         /// to exclude it.
         glob: Vec<String>,
     },
+    /// Show information about a file's thumbnail
+    Info {
+        file: PathBuf
+    }
 }
 
 #[cfg(not_build_rs)]

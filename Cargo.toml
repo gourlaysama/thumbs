@@ -34,6 +34,7 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.22"
+bytesize = "2.3"
 clap = { workspace = true }
 clap-stdin = "0.8"
 flexi_logger = { version = "0.31", default-features = false, features = ["colors"]}

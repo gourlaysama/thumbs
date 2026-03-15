@@ -9,6 +9,7 @@ use thumbs_rs::Thumbnail;
 pub mod cleanup;
 pub mod cli;
 pub mod delete;
+pub mod info;
 pub mod interactive;
 pub mod locate;
 pub mod utils;
@@ -97,6 +98,10 @@ pub fn run(cmd: Command) -> Result<bool> {
             debug!("Locate thumbnail for {}", file.display());
 
             locate::run(&file)?
+        }
+        Command::Info { file } => {
+            debug!("Showing info for {}", file.display());
+            info::run(&file)?
         }
     };
 

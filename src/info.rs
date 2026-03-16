@@ -1,5 +1,6 @@
 use anyhow::Result;
 use bytesize::ByteSize;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::{borrow::Cow, os::unix::fs::MetadataExt, path::Path};
 use thumbs_rs::ThumbnailCache;
 
@@ -37,4 +38,30 @@ pub fn run(p: &Path) -> Result<bool> {
     } else {
         Ok(true)
     }
+}
+
+pub fn cache_run() -> Result<bool> {
+    let c = ThumbnailCache::init()?;
+
+    let mut size = 0;
+    let mut count: usize = 0;
+
+    let mut builder_include = GlobSetBuilder::new();
+    builder_include.add(Glob::new("**")?);
+
+    for t in c.search_thumbnails(&GlobSet::empty(), &builder_include.build()?, false) {
+        count += 1;
+        if let Ok(m) = t.path().metadata() {
+            size += m.size();
+        }
+    }
+
+    for loc in c.cache_locations() {
+        show!("Cache location: {}", loc.display());
+    }
+
+    show!("Thumbnail count: {count}");
+    show!("Total cache size: {}", ByteSize::b(size).display().iec());
+
+    Ok(count != 0)
 }

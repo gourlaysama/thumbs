@@ -111,9 +111,10 @@ pub enum Command {
         /// to exclude it.
         glob: Vec<String>,
     },
-    /// Show information about a file's thumbnail
+    /// Show information about a file's thumbnails or the thumbnail cache
     Info {
-        file: PathBuf
+        /// A file to provide information about
+        file: Option<PathBuf>
     }
 }
 

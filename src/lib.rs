@@ -100,8 +100,13 @@ pub fn run(cmd: Command) -> Result<bool> {
             locate::run(&file)?
         }
         Command::Info { file } => {
-            debug!("Showing info for {}", file.display());
-            info::run(&file)?
+            if let Some(file) = file {
+                debug!("Showing info for {}", file.display());
+                info::run(&file)?
+            } else {
+                debug!("Showing cache information");
+                info::cache_run()?
+            }
         }
     };
 

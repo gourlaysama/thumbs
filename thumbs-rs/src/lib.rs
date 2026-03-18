@@ -228,11 +228,31 @@ impl ThumbnailCache {
     }
 }
 
-#[derive(Debug, Error)]
-#[error("wrong thumbnail at {path}: {source}")]
+#[derive(Debug)]
 pub struct ThumbnailError {
     path: PathBuf,
     source: ThumbnailErrorSource,
+}
+
+impl std::fmt::Display for ThumbnailError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "cannot parse thumbnail {}: ", self.path.display())?;
+        match &self.source {
+            ThumbnailErrorSource::Png(_) => write!(f, "invalid PNG file"),
+            ThumbnailErrorSource::MissingURI => write!(f, "no source URI in metadata"),
+            ThumbnailErrorSource::InvalidSourceURI(_) => write!(f, "invalid source URI"),
+            ThumbnailErrorSource::UnsupportedScheme { scheme, uri: _ } => {
+                write!(f, "unsupported URI scheme '{scheme}', expected 'file'")
+            }
+            ThumbnailErrorSource::Io(_) => write!(f, "I/O error"),
+        }
+    }
+}
+
+impl std::error::Error for ThumbnailError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.source)
+    }
 }
 
 impl ThumbnailError {
@@ -261,17 +281,17 @@ impl ThumbnailError {
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum ThumbnailErrorSource {
-    #[error("invalid png file")]
+    #[error(transparent)]
     Png(#[from] png_pong::decode::Error),
 
-    #[error("the URI for the source file is missing from thumbnail metadata")]
-    MissingMetadata,
+    #[error("could not find a chunk of type 'Thumb::URI' in png file")]
+    MissingURI,
 
-    #[error("invalid souce file URI")]
+    #[error(transparent)]
     InvalidSourceURI(Box<dyn std::error::Error + Send + Sync>),
 
-    #[error("invalid URI scheme '{0}', expected 'file'")]
-    UnsupportedScheme(String),
+    #[error("unsupported URI scheme in '{uri}'")]
+    UnsupportedScheme { scheme: String, uri: String },
 
     #[error(transparent)]
     Io(#[from] std::io::Error),

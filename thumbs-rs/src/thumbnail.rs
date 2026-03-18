@@ -97,7 +97,7 @@ impl Thumbnail {
                 .map_err(|e| ThumbnailError::utf8_error(path.into(), e))?
                 .into_owned()
         } else {
-            return Err(ThumbnailErrorSource::MissingMetadata.with_path(path.into()));
+            return Err(ThumbnailErrorSource::MissingURI.with_path(path.into()));
         };
         trace!("Decoded URI: {source_decoded}");
 
@@ -106,10 +106,11 @@ impl Thumbnail {
 
         // TODO support more
         if source_uri.scheme() != "file" {
-            return Err(
-                ThumbnailErrorSource::UnsupportedScheme(source_uri.scheme().into())
-                    .with_path(path.into()),
-            );
+            return Err(ThumbnailErrorSource::UnsupportedScheme {
+                scheme: source_uri.scheme().into(),
+                uri: source_decoded,
+            }
+            .with_path(path.into()));
         }
 
         Ok(Thumbnail {
@@ -162,7 +163,7 @@ impl Thumbnail {
     }
 
     /// Deletes this [`Thumbnail`].
-    /// 
+    ///
     /// This is essentially a wrapper for [`std::fs::remove_file`].
     ///
     /// # Errors
@@ -174,7 +175,7 @@ impl Thumbnail {
     }
 
     /// Returns the uri for this [`Thumbnail`]'s corresponding file.
-    /// 
+    ///
     /// This is currently guarrantied to be a `file` uri.
     pub fn source_uri(&self) -> &Url {
         &self.source_uri

@@ -37,7 +37,7 @@ where
                 }
             }
             out.flush()?;
-        } else {
+        } else if confirm.eq_ignore_ascii_case("n\n") || confirm == "\n" || confirm.is_empty() {
             return Ok(!thumbnails.is_empty());
         }
     }

@@ -95,9 +95,9 @@ pub enum Command {
     },
     /// Print the path of thumbnails for the given files
     Locate {
-        #[clap(value_parser = clap::value_parser!(PathBuf), value_hint(ValueHint::FilePath), value_name = "FILE")]
-        /// File whose thumbnails are to be found
-        file: PathBuf,
+        #[clap(value_parser = clap::value_parser!(MaybeStdin<PathBuf>), value_hint(ValueHint::FilePath), value_name = "FILE")]
+        /// File whose thumbnails are to be found, or `-` to read a file path from standard input.
+        file: MaybeStdin<PathBuf>,
     },
     /// Find thumbnails for files that no longer exist
     Cleanup {

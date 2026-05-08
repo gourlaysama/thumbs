@@ -113,8 +113,8 @@ pub enum Command {
     },
     /// Show information about a file's thumbnails or the thumbnail cache
     Info {
-        /// A file to provide information about
-        file: Option<PathBuf>
+        /// A file to provide information about, or `-` to read a file path from standard input.
+        file: Option<MaybeStdin<PathBuf>>
     }
 }
 

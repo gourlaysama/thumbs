@@ -105,7 +105,7 @@ pub enum Command {
         /// Actually delete thumbnails
         force: bool,
 
-        #[clap(short, long, value_name = "GLOB")]
+        #[clap(value_name = "GLOB")]
         /// Include or exclude files and directories that match the given globs. Can be used
         /// multiple times. Globbing rules match .gitignore globs. Precede a glob with a !
         /// to exclude it.

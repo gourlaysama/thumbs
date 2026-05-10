@@ -13,10 +13,16 @@ const STYLES: styling::Styles = styling::Styles::styled()
 #[cfg(not_build_rs)]
 const FULL_LONG_VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/full_long_version.txt"));
 
+/// Utility to find and delete generated thumbnails.
+/// 
+/// Foo bar baz.
 #[derive(Debug, clap::Parser)]
 #[command(
-    about = "Utility to find and delete generated thumbnails.",
+    disable_help_flag = true,
+    disable_version_flag = true,
+    propagate_version = true,
     styles = STYLES,
+    disable_help_subcommand = true,
 )]
 #[cfg_attr(not_build_rs, command(
     version = env!("FULL_VERSION"),
@@ -43,6 +49,28 @@ pub struct ProgramOptions {
         help_heading = "Global Flags"
     )]
     quiet: u8,
+
+    /// Print help.
+    #[clap(
+        long,
+        short,
+        action = ArgAction::Help,
+        exclusive = true,
+        global = true,
+        help_heading = "Global Flags"
+    )]
+    help: bool,
+
+    /// Print version.
+    #[clap(
+        long,
+        short = 'V',
+        action = ArgAction::Version,
+        exclusive = true,
+        global = true,
+        help_heading = "Global Flags"
+    )]
+    version: bool,
 
     #[clap(subcommand)]
     pub cmd: Option<Command>,

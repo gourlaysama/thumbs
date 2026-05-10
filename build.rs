@@ -4,7 +4,6 @@ use std::io::Error;
 include!("src/cli.rs");
 
 fn main() -> Result<(), Error> {
-
     build_info()
 }
 
@@ -15,14 +14,22 @@ fn build_info() -> Result<(), Error> {
 
     let mut full_version = info.crate_info.version.to_string();
     if let Some(VersionControl::Git(g)) = info.version_control {
+        let exact_tag = g.tags.iter().find(|t| t.ends_with(&full_version)).is_some();
+        if exact_tag {
+            // this is an exact tag release
+            println!("cargo::rustc-env=FULL_VERSION={full_version}");
+        }
+
         full_version.push_str("+git.");
         full_version.push_str(&g.commit_short_id);
         if g.dirty {
             full_version.push_str(".dirty");
         }
-    }
 
-    println!("cargo::rustc-env=FULL_VERSION={full_version}");
+        if !exact_tag {
+            println!("cargo::rustc-env=FULL_VERSION={full_version}");
+        }
+    }
 
     let dep = info
         .crate_info

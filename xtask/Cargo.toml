@@ -16,3 +16,6 @@ serde = { version = "1", features = ["derive"] }
 
 [lints]
 workspace = true
+
+[package.metadata.release]
+release = false

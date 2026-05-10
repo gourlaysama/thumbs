@@ -8,24 +8,61 @@ NAME
 SYNOPSIS
 ========
 
-| **thumbs** **delete** \[_OPTIONS_] \[_FILE_]...
-| **thumbs** **locate** \[_OPTIONS_] \[_FILE_]
-| **thumbs** **cleanup** \[_OPTIONS_] \[**-g**|**\--glob** glob]...
-| **thumbs** \[**-h**|**\--help**|**-V**|**\--version**]
+| **thumbs** **delete** \[_OPTIONS_] _FILE_...
+| **thumbs** **locate** \[_OPTIONS_] _FILE_
+| **thumbs** **cleanup** \[_OPTIONS_] \[_GLOB_]...
+| **thumbs** **info**  \[_OPTIONS_] \[_FILE_]
 
 DESCRIPTION
 ===========
 
 Manage the cached thumbnails for files.
 
-ARGS
-====
+COMMANDS
+========
 
-FILE
+delete _FILE_...
+-----------------------------
 
-:   File whose thumbnail to operate upon. The file has to exist.
+Delete the thumbnails for the given files.
 
-    This argument can be specified multiple times with the **delete** command.
+_FILE_...
+
+:   File whose thumbnails to delete, or `"-"` for reading a file path from standard input.
+
+    Multiple paths can be given, but only a single one can use `"-"` for standard input. Whatever can be read over standard input will be treated as a single path; use `"xargs"` or similar to programatically giving multiple paths.
+
+locate _FILE_
+---------------------------------
+
+Print the path of thumbnails for the given files.
+
+_FILE_
+
+:   File whose thumbnails are to be found, or `"-"` to read a file path from standard input.
+
+cleanup \[GLOB]...
+-------------------------------------
+
+Find thumbnails for files that no longer exist and optionally delete them.
+
+_GLOB_...
+
+:   Include or exclude files and directories that match the given globs. Can be used multiple times. Globbing rules match `".gitignore"` globs. Precede a glob with a `"!"` to exclude it.
+
+    If no including glob is given, all files are included first before excluding globs are considered.
+
+info \[_FILE_]
+--------------
+
+Show information about a file's thumbnails or the thumbnail cache.
+
+_FILE_
+
+:   A file to provide information about, or `"-"` to read a file path from standard input.
+
+    If no file is given, global information about the thumbnail cache itself is returned.
+
 
 OPTIONS
 =======
@@ -33,45 +70,44 @@ OPTIONS
 Delete options
 -------------
 
--f, \--force
+**-a**, **\--all**
+
+:   Include hidden files and directories.
+
+**-f**, **\--force**
 
 :   Do not prompt and actually delete thumbnails.
 
     Running without **`-f/--force`** will never actually delete anything. If thumbs can detect that the terminal is interactive, it will prompt for deletion. Otherwise it will just print a summary of the operation and ask to rerun with **`-f/--force`**.
 
--l, \--last-accessed _LAST\_ACCESSED_
+**-l,** **\--last-accessed** _LAST\_ACCESSED_
 
 :   Only delete thumbnails for files that haven't been accessed since the given time.
 
-    Can be either a RFC3339-like timestamp ('_`2020-01-01 11:10:00`_') or a free-form duration like '_`1year 15days 1week 2min`_' or '_`1h 6s 2ms`_'.
+    Can be either a RFC3339-like timestamp (`"2020-01-01 11:10:00"`) or a free-form duration like `"1year 15days 1week 2min"` or `"1h 6s 2ms"`.
 
-Cleanup Options
------
+**-r**, **\--recursive**
 
--g, \--glob _GLOB_
+:   Recurse through directories.
 
-:   Include or exclude files and directories that match the given globs.
+Cleanup options
+---------------
 
-    Globbing rules match .gitignore globs, like '_`*/foo.txt`_' or '_`num??.txt`_'. Precede a glob with a '_`!`_' (exclamation point) character to exclude anything that matches it.
+**-f**, **\--force**
 
-    This option can be used multiple times. 
+:   Do not prompt and actually delete thumbnails.
+
+    Running without **`-f/--force`** will never actually delete anything. If thumbs can detect that the terminal is interactive, it will prompt for deletion. Otherwise it will just print a summary of the operation and ask to rerun with **`-f/--force`**.
+
 
 Global flags
 ------------
 
--a, \--all
-
-:   Include hidden files and directories
-
--r, \--recursive
-
-:   Recurse through directories
-
--q, \--quiet
+**-q**, **\--quiet**
 
 :   Pass for less log output
 
--v, \--verbose
+**-v**, **\--verbose**
 
 :   Pass for more log output
 
@@ -85,6 +121,32 @@ Info
 -V, \--version
 
 :   Print version information
+
+EXIT STATUS
+===========
+
+0
+
+:   The operation was successful.
+
+1
+
+:   There was an error.
+
+125
+
+:   The operation was successful because no files were acted upon at all.
+
+ENVIRONMENT
+===========
+
+_`$NO_COLOR`_
+
+:   If set to anything but `"0"`, disable color output.
+
+_`$THUMBS_SYSLOG_PREFIXED`_
+
+:   If set to anything but `"0"`, use the syslog format for log output.
 
 BUGS
 ====

@@ -1,27 +1,11 @@
 use build_info_build::VersionControl;
-use clap::CommandFactory;
-use clap_complete::{Shell, generate_to};
-use std::env;
 use std::io::Error;
 
 include!("src/cli.rs");
 
 fn main() -> Result<(), Error> {
-    let outdir = match env::var_os("OUT_DIR") {
-        None => return Err(Error::new(std::io::ErrorKind::Other, "no $OUT_DIR!")),
-        Some(outdir) => outdir,
-    };
-    let mut app = ProgramOptions::command();
 
-    generate_to(Shell::Bash, &mut app, "thumbs", &outdir)?;
-
-    generate_to(Shell::Zsh, &mut app, "thumbs", &outdir)?;
-
-    generate_to(Shell::Fish, &mut app, "thumbs", outdir)?;
-
-    build_info()?;
-
-    Ok(())
+    build_info()
 }
 
 fn build_info() -> Result<(), Error> {

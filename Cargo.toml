@@ -1,5 +1,6 @@
 [workspace]
 resolver = "3"
+members = ["xtask"]
 
 [workspace.package]
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]

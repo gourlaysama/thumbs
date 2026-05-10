@@ -78,7 +78,7 @@ pub enum Command {
         /// Include hidden files and directories
         all: bool,
 
-        #[clap(value_parser = clap::value_parser!(MaybeStdin<PathBuf>), value_hint(ValueHint::FilePath), value_name = "FILE")]
+        #[clap(required = true, value_parser = clap::value_parser!(MaybeStdin<PathBuf>), value_hint(ValueHint::FilePath), value_name = "FILE")]
         /// Files whose thumbnails to delete, or `-` for reading a file path from standard input.
         /// 
         /// Multiple paths can be given, but only a single one can use `-` for standard input. Whatever

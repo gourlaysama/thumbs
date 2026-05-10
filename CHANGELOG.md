@@ -4,6 +4,29 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Packaging
+
+* The Minimum Supported Rust Version for thumbs is now 1.87.
+* Completion files are no longer generation at build time, but instead by calling `cargo xtask gen-completions`, with output in `extra/complete`.
+
+### Features
+
+* Added an `info` command to show thumbnail information for a file or for the whole thumbnail cache.
+* Added a systemd user service & timer for regular cleanup of stale thumbnails, see `extra/systemd/`.
+* Allowed `delete`, `locate` and `info` commands to take a path on standard input when given `-` as an argument.
+
+### Changed
+
+* The `cleanup` command no longer takes `-g/--glob` named arguments but expects them as direct positional arguments: `thumbs cleanup '*Dutch*' '!*.pdf'` instead of `thumbs cleanup -g '*Dutch*' -g '!*.pdf'`.
+
+### Fixed
+
+* Symlinks are followed when `delete` and `cleanup` commands need to recurse into folders, ignoring broken links and cycles.
+* Thumbs does not throw an error when a file's access time is unavailable.
+* Thumbs no longer panics when encountering invalid thumbnails.
+* Fixed Nautilus integration to support more modern versions of Nautilus.
+* The interactive prompt no longer quits when a wrong answer is provided but simply reset and prompts again.
+
 ## [0.4.5] - 2022-07-19
 
 ### Packaging

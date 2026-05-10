@@ -79,7 +79,7 @@ pub enum Command {
         all: bool,
 
         #[clap(required = true, value_parser = clap::value_parser!(MaybeStdin<PathBuf>), value_hint(ValueHint::FilePath), value_name = "FILE")]
-        /// Files whose thumbnails to delete, or `-` for reading a file path from standard input.
+        /// File whose thumbnails to delete, or `-` for reading a file path from standard input.
         /// 
         /// Multiple paths can be given, but only a single one can use `-` for standard input. Whatever
         /// can be read over standard input will be treated as a single path; use `xargs` or similar to
@@ -99,21 +99,26 @@ pub enum Command {
         /// File whose thumbnails are to be found, or `-` to read a file path from standard input.
         file: MaybeStdin<PathBuf>,
     },
-    /// Find thumbnails for files that no longer exist
+    /// Find thumbnails for files that no longer exist and optionally delete them
     Cleanup {
         #[clap(short, long, help_heading = "Flags")]
-        /// Actually delete thumbnails
+        /// Do not prompt and actually delete thumbnails.
         force: bool,
 
         #[clap(value_name = "GLOB")]
         /// Include or exclude files and directories that match the given globs. Can be used
-        /// multiple times. Globbing rules match .gitignore globs. Precede a glob with a !
+        /// multiple times. Globbing rules match `.gitignore` globs. Precede a glob with a `!`
         /// to exclude it.
+        /// 
+        /// If no including glob is given, all files are included first before excluding globs are
+        /// considered.
         glob: Vec<String>,
     },
     /// Show information about a file's thumbnails or the thumbnail cache
     Info {
         /// A file to provide information about, or `-` to read a file path from standard input.
+        /// 
+        /// If no file is given, global information about the thumbnail cache itself is returned.
         file: Option<MaybeStdin<PathBuf>>
     }
 }

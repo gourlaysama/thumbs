@@ -6,7 +6,7 @@ use thumbs_rs::Thumbnail;
 
 pub(crate) fn user_prompt<F>(thumbnails: &[Thumbnail], on_yes: F) -> Result<bool>
 where
-    F: Fn() -> (),
+    F: Fn(),
 {
     loop {
         {

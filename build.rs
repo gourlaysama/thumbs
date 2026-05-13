@@ -14,7 +14,7 @@ fn build_info() -> Result<(), Error> {
 
     let mut full_version = info.crate_info.version.to_string();
     if let Some(VersionControl::Git(g)) = info.version_control {
-        let exact_tag = g.tags.iter().find(|t| t.ends_with(&full_version)).is_some();
+        let exact_tag = g.tags.iter().any(|t| t.ends_with(&full_version));
         if exact_tag {
             // this is an exact tag release
             println!("cargo::rustc-env=FULL_VERSION={full_version}");

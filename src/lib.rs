@@ -121,7 +121,7 @@ pub fn run(cmd: Command) -> Result<bool> {
 macro_rules! show {
     ($($a:tt)*) => {
         {
-            if *crate::STDOUT_IS_TERMINAL {
+            if *$crate::STDOUT_IS_TERMINAL {
                 println!($($a)*);
             } else {
                 log::info!($($a)*);

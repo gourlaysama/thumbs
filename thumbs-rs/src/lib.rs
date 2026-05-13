@@ -197,7 +197,7 @@ impl ThumbnailCache {
                 .into_iter()
                 .filter_map(|e| e.ok())
                 .filter(|e| {
-                    !e.file_type().is_dir() && e.path().extension().map_or(false, |p| p == "png")
+                    !e.file_type().is_dir() && e.path().extension().is_some_and(|p| p == "png")
                 })
             {
                 let path = entry.path();
@@ -215,10 +215,10 @@ impl ThumbnailCache {
                     let glob_candidate = Candidate::new(&origin_path);
                     if !exclude.is_match_candidate(&glob_candidate)
                         && include.is_match_candidate(&glob_candidate)
+                        && !stale
+                        || thumb.is_stale().unwrap_or(false)
                     {
-                        if !stale || thumb.is_stale().unwrap_or(false) {
-                            thumbs.push(thumb);
-                        }
+                        thumbs.push(thumb);
                     }
                 }
             }
@@ -350,14 +350,13 @@ fn make_encoded_uri(path: &Path) -> TResult<String> {
 
     let mut url = String::new();
     url.push_str("file://");
-    url.extend(percent_encode(inner.as_bytes(), &CUSTOM_ENCODING_SET));
+    url.extend(percent_encode(inner.as_bytes(), CUSTOM_ENCODING_SET));
 
     Ok(url)
 }
 
 fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
-    let mut cache = Xdg::new()
-        .or_else(|e| Err(io::Error::new(io::ErrorKind::NotFound, e)))?
+    let mut cache = Xdg::new().map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?
         .cache_dir();
     cache.push("thumbnails/");
 

@@ -94,7 +94,7 @@ impl Thumbnail {
             trace!("Decoding URI: {u}");
             percent_decode_str(&u)
                 .decode_utf8()
-                .map_err(|e| ThumbnailError::utf8_error(path.into(), e))?
+                .map_err(|e| ThumbnailError::utf8_error(path, e))?
                 .into_owned()
         } else {
             return Err(ThumbnailErrorSource::MissingURI.with_path(path.into()));
@@ -102,7 +102,7 @@ impl Thumbnail {
         trace!("Decoded URI: {source_decoded}");
 
         let source_uri =
-            Url::parse(&source_decoded).map_err(|e| ThumbnailError::url_error(path.into(), e))?;
+            Url::parse(&source_decoded).map_err(|e| ThumbnailError::url_error(path, e))?;
 
         // TODO support more
         if source_uri.scheme() != "file" {
@@ -170,8 +170,8 @@ impl Thumbnail {
     ///
     /// This function will return an error if the underlying file cannot be removed.
     pub fn delete(&self) -> TResult<()> {
-        Ok(std::fs::remove_file(&self.inner)
-            .map_err(|e| ThumbnailErrorSource::Io(e).with_path(self.inner.clone()))?)
+        std::fs::remove_file(&self.inner)
+            .map_err(|e| ThumbnailErrorSource::Io(e).with_path(self.inner.clone()))
     }
 
     /// Returns the uri for this [`Thumbnail`]'s corresponding file.

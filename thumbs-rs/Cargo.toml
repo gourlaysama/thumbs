@@ -1,0 +1,25 @@
+[package]
+name = "thumbs-rs"
+version = "0.1.0-alpha.0"
+description = "A library to manage the cached thumbnails for files."
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+documentation = "https://github.com/gourlaysama/thumbs"
+homepage = "https://github.com/gourlaysama/thumbs"
+repository = "https://github.com/gourlaysama/thumbs"
+license.workspace = true
+
+[dependencies]
+etcetera = "0.11"
+globset = { workspace = true }
+log = { workspace = true }
+md5 = "0.8"
+percent-encoding = "2.3.2"
+png_pong = "0.10"
+thiserror = "2"
+url = "2"
+walkdir = "2.2.2"
+
+[lints]
+workspace = true

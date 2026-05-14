@@ -1,53 +1,63 @@
-use clap::CommandFactory;
-use clap_complete::{generate_to, Shell};
-use std::env;
+use build_info_build::VersionControl;
 use std::io::Error;
-use std::process;
 
 include!("src/cli.rs");
 
 fn main() -> Result<(), Error> {
-    let outdir = match env::var_os("OUT_DIR") {
-        None => return Err(Error::new(std::io::ErrorKind::Other, "no $OUT_DIR!")),
-        Some(outdir) => outdir,
-    };
-    let mut app = ProgramOptions::command();
-
-    generate_to(Shell::Bash, &mut app, "thumbs", &outdir)?;
-
-    generate_to(Shell::Zsh, &mut app, "thumbs", &outdir)?;
-
-    generate_to(Shell::Fish, &mut app, "thumbs", outdir)?;
-
-    if let Some(v) = version_check::Version::read() {
-        println!("cargo:rustc-env=BUILD_RUSTC={}", v)
-    }
-
-    if let Some(hash) = get_commit_hash().or_else(|| env::var("BUILD_ID").ok()) {
-        println!("cargo:rustc-env=BUILD_ID={}", hash);
-    }
-
-    println!(
-        "cargo:rustc-env=BUILD_INFO={}-{}-{}-{}",
-        env::var("CARGO_CFG_TARGET_ARCH").unwrap(),
-        env::var("CARGO_CFG_TARGET_VENDOR").unwrap(),
-        env::var("CARGO_CFG_TARGET_OS").unwrap(),
-        env::var("CARGO_CFG_TARGET_ENV").unwrap(),
-    );
-
-    Ok(())
+    build_info()
 }
 
-fn get_commit_hash() -> Option<String> {
-    process::Command::new("git")
-        .args(&["rev-parse", "--short", "HEAD"])
-        .output()
-        .ok()
-        .and_then(|r| {
-            if r.status.success() {
-                String::from_utf8(r.stdout).ok()
-            } else {
-                None
-            }
-        })
+fn build_info() -> Result<(), Error> {
+    let info = build_info_build::build_script()
+        .collect_dependencies(build_info_build::DependencyDepth::Depth(1))
+        .build();
+
+    let mut full_version = info.crate_info.version.to_string();
+    if let Some(VersionControl::Git(g)) = info.version_control {
+        let exact_tag = g.tags.iter().any(|t| t.ends_with(&full_version));
+        if exact_tag {
+            // this is an exact tag release
+            println!("cargo::rustc-env=FULL_VERSION={full_version}");
+        }
+
+        full_version.push_str("+git.");
+        full_version.push_str(&g.commit_short_id);
+        if g.dirty {
+            full_version.push_str(".dirty");
+        }
+
+        if !exact_tag {
+            println!("cargo::rustc-env=FULL_VERSION={full_version}");
+        }
+    }
+
+    let dep = info
+        .crate_info
+        .dependencies
+        .iter()
+        .find(|c| c.name == "thumbs-rs")
+        .expect("missing thumbs-rs?");
+    full_version.push_str("\n\n");
+    full_version.push_str(&dep.name);
+    full_version.push(' ');
+    full_version.push_str(&dep.version.to_string());
+
+    full_version.push('\n');
+    full_version.push_str(&info.compiler.to_string());
+    full_version.push('\n');
+    full_version.push_str(&info.target.triple);
+
+    if info.profile != "release" {
+        full_version.push_str("\n\n+");
+        full_version.push_str(&info.profile);
+    }
+
+    let mut out = std::env::var("OUT_DIR").unwrap();
+    out.push_str("/full_long_version.txt");
+    std::fs::write(out, full_version)?;
+
+    println!("cargo::rustc-check-cfg=cfg(not_build_rs)");
+    println!("cargo::rustc-cfg=not_build_rs");
+
+    Ok(())
 }

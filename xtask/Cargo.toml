@@ -1,0 +1,21 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = "1"
+clap = { workspace = true }
+clap_complete = "4"
+clap-stdin = "0.8"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+
+[lints]
+workspace = true
+
+[package.metadata.release]
+release = false

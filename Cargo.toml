@@ -1,59 +1,114 @@
-[package]
-name = "thumbs"
-version = "0.4.6-dev"
+[workspace]
+resolver = "3"
+members = ["xtask"]
+
+[workspace.package]
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
-edition = "2021"
-rust-version = "1.57"
-description = "A CLI tool to manage the cached thumbnails for files."
-documentation = "https://github.com/gourlaysama/thumbs"
-homepage = "https://github.com/gourlaysama/thumbs"
-repository = "https://github.com/gourlaysama/thumbs"
-readme = "README.md"
+edition = "2024"
+rust-version = "1.87"
 license = "Apache-2.0"
 
-[dependencies]
-anyhow = "1"
-url = "2"
-md5 = "0.7"
+# Global dependencies
+[workspace.dependencies]
+globset = "0.4.1"
 log = "0.4"
-env_logger = "0.9"
-dirs = "4"
-walkdir = "2"
-globset = "0.4"
-png_pong = "0.8"
-humantime = "2"
-atty = "0.2"
-
-[dependencies.clap]
-version = "3"
-features = ["derive", "cargo", "wrap_help"]
-
-[build-dependencies.clap]
-version = "3"
-features = ["derive", "cargo", "wrap_help"]
-
-[build-dependencies]
-version_check = "0.9"
-serde = { version = "1", features = ["derive"] }
-clap_complete = "3"
-log = "0.4"
-anyhow = "1"
-humantime = "2"
+clap = { version = "4.5.14", features = ["derive", "cargo", "wrap_help"] }
 
 [profile.release]
 lto = true
 
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(not_build_rs)'] }
+unsafe_code = "forbid"
+
+# Cli package
+
+[package]
+name = "thumbs"
+version = "0.5.0-alpha.0"
+description = "A CLI tool to manage the cached thumbnails for files."
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+readme = "README.md"
+
+[dependencies]
+anyhow = "1.0.22"
+bytesize = "2.3"
+clap = { workspace = true }
+clap-stdin = "0.8"
+flexi_logger = { version = "0.31", default-features = false, features = ["colors"]}
+globset = { workspace = true }
+humantime = "2"
+log = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+url = "2"
+thumbs-rs = { path = "thumbs-rs" }
+
+[build-dependencies]
+build-info-build = "0.0.42"
+anyhow = "1"
+clap = { workspace = true }
+clap_complete = "4"
+clap-stdin = "0.8"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+
 [package.metadata.deb]
 priority = "optional"
 assets = [
-    ["target/x86_64-unknown-linux-musl/release/thumbs", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/thumbs/", "644"],
-    ["CHANGELOG.md", "usr/share/doc/thumbs/", "644"],
-    ["LICENSE", "usr/share/doc/thumbs/", "644"],
-    ["NOTICE", "usr/share/doc/thumbs/", "644"],
-    ["extra/nautilus/thumbs-nautilus.py", "use/share/nautilus-python/extensions/", "644"],
-    ["complete/thumbs.bash", "usr/share/bash-completion/completions/thumbs", "644"],
-    ["complete/thumbs.fish", "usr/share/fish/vendor_completions.d/", "644"],
-    ["complete/_thumbs", "usr/share/zsh/site-functions/", "644"],
-    ["thumbs.1.gz", "usr/share/man/man1/thumbs.1.gz", "644"]
+    [
+        "target/x86_64-unknown-linux-musl/release/thumbs",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "README.md",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "CHANGELOG.md",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "LICENSE",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "NOTICE",
+        "usr/share/doc/thumbs/",
+        "644",
+    ],
+    [
+        "extra/nautilus/thumbs-nautilus.py",
+        "use/share/nautilus-python/extensions/",
+        "644",
+    ],
+    [
+        "complete/thumbs.bash",
+        "usr/share/bash-completion/completions/thumbs",
+        "644",
+    ],
+    [
+        "complete/thumbs.fish",
+        "usr/share/fish/vendor_completions.d/",
+        "644",
+    ],
+    [
+        "complete/_thumbs",
+        "usr/share/zsh/site-functions/",
+        "644",
+    ],
+    [
+        "thumbs.1.gz",
+        "usr/share/man/man1/thumbs.1.gz",
+        "644",
+    ],
 ]
+
+[lints]
+workspace = true

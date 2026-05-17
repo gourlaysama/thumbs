@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.5.0] - 2026-05-17
+
 ### Packaging
 
 * The Minimum Supported Rust Version for thumbs is now 1.87.
@@ -132,7 +134,8 @@
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/gourlaysama/thumbs/compare/v0.4.5...v0.5.0
 [0.4.5]: https://github.com/gourlaysama/thumbs/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/gourlaysama/thumbs/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/gourlaysama/thumbs/compare/v0.4.2...v0.4.3

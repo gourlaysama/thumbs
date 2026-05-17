@@ -1,6 +1,6 @@
 [package]
 name = "thumbs-rs"
-version = "0.1.0-alpha.0"
+version = "0.1.0"
 description = "A library to manage the cached thumbnails for files."
 authors.workspace = true
 edition.workspace = true

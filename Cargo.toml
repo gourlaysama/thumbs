@@ -59,7 +59,7 @@ serde = { version = "1", features = ["derive"] }
 priority = "optional"
 assets = [
     [
-        "target/x86_64-unknown-linux-musl/release/thumbs",
+        "target/release/thumbs",
         "usr/bin/",
         "755",
     ],
@@ -82,6 +82,16 @@ assets = [
         "NOTICE",
         "usr/share/doc/thumbs/",
         "644",
+    ],
+    [
+        "extra/systemd-user/thumbnail-cleanup.service",
+        "usr/lib/systemd/user/",
+        "644"
+    ],
+    [
+        "extra/systemd-user/thumbnail-cleanup.timer",
+        "usr/lib/systemd/user/",
+        "644"
     ],
     [
         "extra/nautilus/thumbs-nautilus.py",

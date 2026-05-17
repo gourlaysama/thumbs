@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+This release is identical to v0.5.0, re-released to fix a publishing workflow error.
+
 ## [0.5.0] - 2026-05-17
 
 ### Packaging

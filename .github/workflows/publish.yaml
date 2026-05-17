@@ -10,15 +10,14 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  init:
-    name: Open draft release
+  build:
+    name: Draft & Build
     runs-on: ubuntu-latest
     env:
       G_VERSION:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
           fetch-tags: true
       - name: Create release text
         run: |
@@ -34,13 +33,8 @@ jobs:
           draft: true
           body_path: GH_RELEASE.md
           token: ${{ secrets.GSAMA_RELEASE_CREATION }}
-  tarball:
-    name: Build tarball
-    needs: init
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - run: rustup set profile minimal && rustup toolchain install stable-x86_64-unknown-linux-musl && rustup default stable-x86_64-unknown-linux-musl
+      - name: Install musl target
+        run: rustup target add x86_64-unknown-linux-musl
       - name: Install native dependencies
         run: |
           sudo apt-get update
@@ -49,8 +43,31 @@ jobs:
         run: cargo build --verbose --release --target x86_64-unknown-linux-musl
         env:
           RUSTFLAGS: -Ccodegen-units=1 -Clink-arg=-Wl,-z,relro
-      - name: Generate completions
-        run: cargo xtask gen-completions
+      - name: Generate completions & Man Page
+        run: |
+          cargo xtask gen-completions
+          pandoc -s --to man doc/thumbs.1.md -o "thumbs.1"
+          gzip thumbs.1
+      - uses: actions/upload-artifact@v7
+        name: Upload build results
+        with:
+          name: thumbs
+          path: |
+            target/x86_64-unknown-linux-musl/release/thumbs
+            extra/complete
+            thumbs.1.gz
+          compression-level: 0
+  tarball:
+      name: Generate tarball
+      needs: build
+      runs-on: ubuntu-latest
+      steps: 
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        name: Download build results
+        with:
+          name: thumbs
+          path: output
       - name: Prepare package
         run: |
           G_TAG=${{ github.ref }}
@@ -58,14 +75,15 @@ jobs:
           DIST_DIR="thumbs-$G_VERSION-x86_64-unknown-linux-musl"
           TARGET_FILE="$DIST_DIR.tar.gz"
           rm -rf "$DIST_DIR"
-          mkdir -p "$DIST_DIR/complete"
-          cp -p target/x86_64-unknown-linux-musl/release/thumbs "$DIST_DIR"
+          mkdir -p "$DIST_DIR"
+          cp -p output/target/x86_64-unknown-linux-musl/release/thumbs "$DIST_DIR"
           cp -p README.md "$DIST_DIR"
           cp -p CHANGELOG.md "$DIST_DIR"
           cp -p LICENSE "$DIST_DIR"
           cp -p NOTICE "$DIST_DIR"
           cp -rp extra "$DIST_DIR"
-          pandoc -s --to man doc/thumbs.1.md -o "$DIST_DIR/thumbs.1"
+          cp -p output/thumbs.1.gz "$DIST_DIR"
+          cp -rp output/extra/complete "$DIST_DIR"
           strip "$DIST_DIR/thumbs"
           tar -czf "$TARGET_FILE" "$DIST_DIR"
           sha256sum "$TARGET_FILE" > "$TARGET_FILE.sha256"
@@ -78,31 +96,28 @@ jobs:
           gh release upload $G_VERSION *.tar.gz *.tar.gz.sha256
   debian:
     name: Build Debian package
-    needs: init
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - run: rustup set profile minimal && rustup toolchain install stable-x86_64-unknown-linux-musl && rustup default stable-x86_64-unknown-linux-musl
+      - uses: actions/download-artifact@v8
+        with:
+          name: thumbs
+          path: output
+      - run: rustup target add x86_64-unknown-linux-musl
       - name: Install native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends dpkg-dev musl-tools pandoc
+          sudo apt-get install -y --no-install-recommends dpkg-dev musl-tools
       - name: Install cargo-deb
         run: cargo install cargo-deb
-      - name: Build static release
-        run: cargo build --verbose --release --target x86_64-unknown-linux-musl
-        env:
-          RUSTFLAGS: -Ccodegen-units=1 -Clink-arg=-Wl,-z,relro
-      - name: Generate man page
-        run: |
-          mkdir -p complete
-          cp -p target/x86_64-unknown-linux-musl/release/build/thumbs-*/out/thumbs.bash "complete"
-          cp -p target/x86_64-unknown-linux-musl/release/build/thumbs-*/out/thumbs.fish "complete"
-          cp -p target/x86_64-unknown-linux-musl/release/build/thumbs-*/out/_thumbs "complete"
-          pandoc -s --to man doc/thumbs.1.md -o "thumbs.1"
-          gzip thumbs.1
       - name: Prepare deb package
-        run: cargo deb --verbose --no-build --target x86_64-unknown-linux-musl
+        run: |
+          mkdir -p target/x86_64-unknown-linux-musl/release/
+          mv output/target/x86_64-unknown-linux-musl/release/thumbs target/x86_64-unknown-linux-musl/release/
+          mv output/extra/complete .
+          mv output/thumbs.1.gz .
+          cargo deb --verbose --no-build --target x86_64-unknown-linux-musl
       - name: Upload package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

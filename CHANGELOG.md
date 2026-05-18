@@ -4,6 +4,14 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Packaging
+
+* Packagers can include a build id with the `BUILD_ID` environment variable when building thumbs.
+
+### Fixed
+
+* Fixed an argument parsing error with `--help` and `--version`.
+
 ## [0.5.1] - 2026-05-18
 
 This release is identical to v0.5.0, re-released to fix a publishing workflow error.

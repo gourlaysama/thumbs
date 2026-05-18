@@ -15,7 +15,7 @@ fn main() -> Result<(), std::io::Error> {
 
         println!("Generating completions in {}", outdir.display());
 
-        let mut app = ProgramOptions::command();
+        let mut app = ProgramOptions::command().version("unknown");
 
         generate_to(Shell::Bash, &mut app, "thumbs", &outdir)?;
 

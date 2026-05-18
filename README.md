@@ -71,7 +71,7 @@ Deleted 753 thumbnails(s).
 ## Building from source
 
 thumbs is written in Rust, so you need a [Rust install] to build it. thumbs compiles with
-Rust 1.57 or newer.
+Rust 1.87 or newer.
 
 ```sh
 $ git clone https://github.com/gourlaysama/thumbs -b v0.5.1
@@ -80,14 +80,6 @@ $ cargo build --release
 $ ./target/release/thumbs -V
 thumbs 0.5.1
 ```
-
-## TODO
-
-- [x] Cleanup thumbnails for files that don't exist
-- [x] Cleanup thumbnails for files not accessed in `duration`
-- [ ] Generate thumbnails for files?
-- [ ] Find out which DE this works with
-- [x] Prompt when in a terminal instead of asking to re-run with `-f/-d`
 
 #### License
 

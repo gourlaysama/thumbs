@@ -39,7 +39,7 @@ fn main() -> ThumbsResult {
 
 fn setup() -> Result<Command> {
     let args_matches = ProgramOptions::command().get_matches();
-    let args = ProgramOptions::from_arg_matches(&args_matches)?;
+    let args = ProgramOptions::from_arg_matches(&args_matches).unwrap();
 
     let mut log_spec = LogSpecBuilder::new();
     log_spec.default(args.log_level_with_default(1));

@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.5.1] - 2026-05-18
+
 This release is identical to v0.5.0, re-released to fix a publishing workflow error.
 
 ## [0.5.0] - 2026-05-17
@@ -136,7 +138,8 @@ This release is identical to v0.5.0, re-released to fix a publishing workflow er
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/gourlaysama/thumbs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gourlaysama/thumbs/compare/v0.4.5...v0.5.0
 [0.4.5]: https://github.com/gourlaysama/thumbs/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/gourlaysama/thumbs/compare/v0.4.3...v0.4.4

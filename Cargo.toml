@@ -25,7 +25,7 @@ unsafe_code = "forbid"
 
 [package]
 name = "thumbs"
-version = "0.5.0"
+version = "0.5.1"
 description = "A CLI tool to manage the cached thumbnails for files."
 authors.workspace = true
 edition.workspace = true

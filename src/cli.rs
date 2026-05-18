@@ -59,7 +59,7 @@ pub struct ProgramOptions {
         global = true,
         help_heading = "Global Flags"
     )]
-    help: bool,
+    help: Option<bool>,
 
     /// Print version.
     #[clap(
@@ -70,7 +70,7 @@ pub struct ProgramOptions {
         global = true,
         help_heading = "Global Flags"
     )]
-    version: bool,
+    version: Option<bool>,
 
     #[clap(subcommand)]
     pub cmd: Option<Command>,

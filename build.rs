@@ -29,6 +29,12 @@ fn build_info() -> Result<(), Error> {
         if !exact_tag {
             println!("cargo::rustc-env=FULL_VERSION={full_version}");
         }
+    } else if let Ok(build_id) = std::env::var("BUILD_ID") {
+        println!("cargo::rustc-env=FULL_VERSION={full_version}");
+        full_version.push('+');
+        full_version.push_str(&build_id);
+    } else {
+        println!("cargo::rustc-env=FULL_VERSION={full_version}");
     }
 
     let dep = info

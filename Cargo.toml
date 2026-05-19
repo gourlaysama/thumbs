@@ -47,6 +47,10 @@ serde = { version = "1", features = ["derive"] }
 url = "2"
 thumbs-rs = { path = "thumbs-rs" }
 
+[dev-dependencies]
+assert_cmd = "2.2"
+predicates = "3.1"
+
 [build-dependencies]
 build-info-build = "0.0.42"
 anyhow = "1"

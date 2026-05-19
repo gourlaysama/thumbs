@@ -41,6 +41,8 @@ use walkdir::WalkDir;
 
 pub use crate::thumbnail::Thumbnail;
 
+#[cfg(test)]
+mod tests;
 pub mod thumbnail;
 
 type TResult<T> = Result<T, ThumbnailError>;
@@ -64,6 +66,11 @@ impl ThumbnailCache {
         Ok(ThumbnailCache {
             cache_locations: find_cache_locations()?,
         })
+    }
+
+    #[cfg(test)]
+    fn init_with(cache_locations: Vec<PathBuf>) -> Result<Self, io::Error> {
+        Ok(ThumbnailCache { cache_locations })
     }
 
     /// Returns the cache locations of this [`ThumbnailCache`].
@@ -356,7 +363,8 @@ fn make_encoded_uri(path: &Path) -> TResult<String> {
 }
 
 fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
-    let mut cache = Xdg::new().map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?
+    let mut cache = Xdg::new()
+        .map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?
         .cache_dir();
     cache.push("thumbnails/");
 

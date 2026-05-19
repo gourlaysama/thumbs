@@ -4,21 +4,26 @@
  * # Example
  *
  * ```
- * use std::env
- * use std::path::Path
- * use thumbs_rs::ThumbnailCache
+ * use anyhow::Result;
+ * use std::env;
+ * use std::path::Path;
+ * use thumbs_rs::ThumbnailCache;
  *
  * fn main() -> Result<()> {
- *      let path = env::args.next().unwrap();
- *      let cache = ThumbnailCache::init()?;
+ *     if let Some(path) = env::args().next() {
+ *         let path = Path::new(&path);
+ *         let cache = ThumbnailCache::init()?;
  *
- *      for thumbnail in cache.find_thumbnails_for_file(&path)? {
- *          println!("found: {:?}", thumbnail.path())
- *          if thumbnail.is_stale()? {
- *              println!("thumbnail is not up to date, deleting...")
- *              thumbnail.delete()?;
- *          }
- *      }
+ *         for thumbnail in cache.find_thumbnails_for_file(path)? {
+ *             println!("found: {:?}", thumbnail.path());
+ *             if thumbnail.is_stale()? {
+ *                 println!("thumbnail is not up to date, deleting...");
+ *                 thumbnail.delete()?;
+ *             }
+ *         }
+ *     }
+ * 
+ *     Ok(())
  * }
  * ```
  */

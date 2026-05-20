@@ -15,7 +15,7 @@ env:
 
 jobs:
   check:
-    name: Check
+    name: Check & Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,8 +24,12 @@ jobs:
           - 1.87.0 # Rust MSRV
     steps:
       - uses: actions/checkout@v6
-      - run: rustup set profile minimal && rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
-      - run: cargo check --verbose
+      - name: Setup
+        run: rustup set profile minimal && rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - name: Check
+        run: cargo check --verbose
+      - name: Test
+        run: cargo test --workspace
 
   lint:
     name: Lint

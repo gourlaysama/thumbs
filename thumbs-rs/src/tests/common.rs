@@ -8,6 +8,15 @@ pub type R = anyhow::Result<()>;
 const PNG_SIGNATURE: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
 pub fn make_empty_thumbnail(dir: &Path, source: &Path) -> anyhow::Result<PathBuf> {
+    make_thumbnail(dir, source, None, None)
+}
+
+pub fn make_thumbnail(
+    dir: &Path,
+    source: &Path,
+    a_time: Option<u64>,
+    size: Option<u64>,
+) -> anyhow::Result<PathBuf> {
     let mut encoded_path = String::new();
     encoded_path.push_str("file://");
     encoded_path.extend(percent_encode(
@@ -39,6 +48,18 @@ pub fn make_empty_thumbnail(dir: &Path, source: &Path) -> anyhow::Result<PathBuf
         key: "Thumb::URI".to_string(),
         val: encoded_path,
     }))?;
+    if let Some(a_time) = a_time {
+        encoder.encode(&mut Chunk::Text(Text {
+            key: "Thumb::MTime".to_string(),
+            val: format!("{}", a_time),
+        }))?;
+    }
+    if let Some(size) = size {
+        encoder.encode(&mut Chunk::Text(Text {
+            key: "Thumb::Size".to_string(),
+            val: format!("{}", size),
+        }))?;
+    }
     encoder.encode(&mut Chunk::ImageEnd(ImageEnd))?;
 
     fs::write(&result, &data)?;

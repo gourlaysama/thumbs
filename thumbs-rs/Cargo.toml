@@ -21,5 +21,9 @@ thiserror = "2"
 url = "2"
 walkdir = "2.2.2"
 
+[dev-dependencies]
+anyhow = { workspace = true }
+assert_fs = "1.1"
+
 [lints]
 workspace = true

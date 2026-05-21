@@ -10,6 +10,7 @@ license = "Apache-2.0"
 
 # Global dependencies
 [workspace.dependencies]
+anyhow = "1.0.22"
 globset = "0.4.1"
 log = "0.4"
 clap = { version = "4.5.14", features = ["derive", "cargo", "wrap_help"] }
@@ -34,7 +35,7 @@ license.workspace = true
 readme = "README.md"
 
 [dependencies]
-anyhow = "1.0.22"
+anyhow = { workspace = true }
 bytesize = "2.3"
 clap = { workspace = true }
 clap-stdin = "0.8"
@@ -45,6 +46,10 @@ log = { workspace = true }
 serde = { version = "1", features = ["derive"] }
 url = "2"
 thumbs-rs = { path = "thumbs-rs" }
+
+[dev-dependencies]
+assert_cmd = "2.2"
+predicates = "3.1"
 
 [build-dependencies]
 build-info-build = "0.0.42"

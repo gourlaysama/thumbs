@@ -4,21 +4,26 @@
  * # Example
  *
  * ```
- * use std::env
- * use std::path::Path
- * use thumbs_rs::ThumbnailCache
+ * use anyhow::Result;
+ * use std::env;
+ * use std::path::Path;
+ * use thumbs_rs::ThumbnailCache;
  *
  * fn main() -> Result<()> {
- *      let path = env::args.next().unwrap();
- *      let cache = ThumbnailCache::init()?;
+ *     if let Some(path) = env::args().next() {
+ *         let path = Path::new(&path);
+ *         let cache = ThumbnailCache::init()?;
  *
- *      for thumbnail in cache.find_thumbnails_for_file(&path)? {
- *          println!("found: {:?}", thumbnail.path())
- *          if thumbnail.is_stale()? {
- *              println!("thumbnail is not up to date, deleting...")
- *              thumbnail.delete()?;
- *          }
- *      }
+ *         for thumbnail in cache.find_thumbnails_for_file(path)? {
+ *             println!("found: {:?}", thumbnail.path());
+ *             if thumbnail.is_stale()? {
+ *                 println!("thumbnail is not up to date, deleting...");
+ *                 thumbnail.delete()?;
+ *             }
+ *         }
+ *     }
+ * 
+ *     Ok(())
  * }
  * ```
  */
@@ -41,6 +46,8 @@ use walkdir::WalkDir;
 
 pub use crate::thumbnail::Thumbnail;
 
+#[cfg(test)]
+mod tests;
 pub mod thumbnail;
 
 type TResult<T> = Result<T, ThumbnailError>;
@@ -64,6 +71,11 @@ impl ThumbnailCache {
         Ok(ThumbnailCache {
             cache_locations: find_cache_locations()?,
         })
+    }
+
+    #[cfg(test)]
+    fn init_with(cache_locations: Vec<PathBuf>) -> Result<Self, io::Error> {
+        Ok(ThumbnailCache { cache_locations })
     }
 
     /// Returns the cache locations of this [`ThumbnailCache`].
@@ -356,7 +368,8 @@ fn make_encoded_uri(path: &Path) -> TResult<String> {
 }
 
 fn find_cache_locations() -> Result<Vec<PathBuf>, io::Error> {
-    let mut cache = Xdg::new().map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?
+    let mut cache = Xdg::new()
+        .map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?
         .cache_dir();
     cache.push("thumbnails/");
 

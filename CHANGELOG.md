@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Packaging
+
+* The Minimum Supported Rust Version for thumbs is now 1.88.
+
 ## [0.5.2] - 2026-05-18
 
 ### Packaging

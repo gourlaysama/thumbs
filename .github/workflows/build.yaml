@@ -21,7 +21,7 @@ jobs:
       matrix:
         toolchain:
           - stable
-          - 1.87.0 # Rust MSRV
+          - 1.88.0 # Rust MSRV
     steps:
       - uses: actions/checkout@v6
       - name: Setup
@@ -38,7 +38,7 @@ jobs:
       matrix:
         toolchain:
           - stable
-          - 1.87.0 # Rust MSRV
+          - 1.88.0 # Rust MSRV
     steps:
       - uses: actions/checkout@v6
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }} && rustup component add clippy

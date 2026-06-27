@@ -5,7 +5,7 @@ members = ["xtask"]
 [workspace.package]
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 license = "Apache-2.0"
 
 # Global dependencies

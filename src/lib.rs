@@ -22,10 +22,10 @@ pub(crate) fn cached_delete(thumbnails: &[Thumbnail]) {
                 if let Ok(p) = uri.to_file_path() {
                     debug!("Deleting thumbnail for {}", p.display());
                 } else {
-                    debug!("Deleting thumbnail for {}", uri);
+                    debug!("Deleting thumbnail for {uri}");
                 }
             } else {
-                debug!("Deleting thumbnail for {}", uri);
+                debug!("Deleting thumbnail for {uri}");
             }
 
             if let Err(e) = p.delete() {

@@ -22,7 +22,7 @@
  *             }
  *         }
  *     }
- * 
+ *
  *     Ok(())
  * }
  * ```
@@ -148,10 +148,10 @@ impl ThumbnailCache {
 
         for path in paths {
             if path.is_file() {
-                if let Some(last_accessed) = last_accessed {
-                    if is_atime_younger_than(path, last_accessed) {
-                        continue;
-                    }
+                if let Some(last_accessed) = last_accessed
+                    && is_atime_younger_than(path, last_accessed)
+                {
+                    continue;
                 };
                 thumbnails.extend(self.find_thumbnails_for_file(path)?);
                 continue;
@@ -173,10 +173,10 @@ impl ThumbnailCache {
                         nb_ignore_dirs += 1;
                         continue;
                     }
-                } else if let Some(last_accessed) = last_accessed {
-                    if is_atime_younger_than(entry.path(), last_accessed) {
-                        continue;
-                    }
+                } else if let Some(last_accessed) = last_accessed
+                    && is_atime_younger_than(entry.path(), last_accessed)
+                {
+                    continue;
                 };
 
                 thumbnails.extend(self.find_thumbnails_for_file(entry.path())?);

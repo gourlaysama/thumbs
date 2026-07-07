@@ -5,7 +5,7 @@ members = ["xtask"]
 [workspace.package]
 authors = ["Antoine Gourlay <antoine@gourlay.fr>"]
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 license = "Apache-2.0"
 
 # Global dependencies
@@ -52,7 +52,7 @@ assert_cmd = "2.2"
 predicates = "3.1"
 
 [build-dependencies]
-build-info-build = "0.0.42"
+build-info-build = "0.0.44"
 anyhow = "1"
 clap = { workspace = true }
 clap_complete = "4"

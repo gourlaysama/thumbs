@@ -141,21 +141,21 @@ impl Thumbnail {
         let metadata = path
             .metadata()
             .map_err(|e| ThumbnailError::from(self.path(), e.into()))?;
-        if let Some(size) = self.size {
-            if size != metadata.size() {
-                return Ok(true);
-            }
+        if let Some(size) = self.size
+            && size != metadata.size()
+        {
+            return Ok(true);
         }
 
-        if let Some(m_time) = self.m_time {
-            if let Ok(file_m_time) = metadata.modified() {
-                let file_m_time = file_m_time
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs();
-                if file_m_time != m_time {
-                    return Ok(true);
-                }
+        if let Some(m_time) = self.m_time
+            && let Ok(file_m_time) = metadata.modified()
+        {
+            let file_m_time = file_m_time
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            if file_m_time != m_time {
+                return Ok(true);
             }
         }
 

@@ -4,6 +4,10 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+### Fixed
+
+* RUSTSEC-2026-0190: fix potential undefined behavior in `anyhow` dependency.
+
 ## [0.5.2] - 2026-05-18
 
 ### Packaging

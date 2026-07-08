@@ -4,6 +4,8 @@
 <!-- next-header -->
 ## [Unreleased] - TBD
 
+## [0.5.3] - 2026-07-08
+
 ### Fixed
 
 * RUSTSEC-2026-0190: fix potential undefined behavior in `anyhow` dependency.
@@ -152,7 +154,8 @@ This release is identical to v0.5.0, re-released to fix a publishing workflow er
 * `locate` command to print the path to a thumbnail for a file.
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/gourlaysama/thumbs/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/gourlaysama/thumbs/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/gourlaysama/thumbs/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/gourlaysama/thumbs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/gourlaysama/thumbs/compare/v0.4.5...v0.5.0

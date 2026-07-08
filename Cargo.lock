@@ -137,9 +137,9 @@ dependencies = [
 
 [[package]]
 name = "build-info-build"
-version = "0.0.44"
+version = "0.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93c808dbd5c28f097b574cb2f5808aca8c6486351bbee5cdb48a379ac091106f"
+checksum = "838512144e4af79c9846a5e1292daca0d4f8111b33dfd81a1ca1c4cfc2eeb00d"
 dependencies = [
  "anyhow",
  "build-info-common",
@@ -157,9 +157,9 @@ dependencies = [
 
 [[package]]
 name = "build-info-common"
-version = "0.0.44"
+version = "0.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52a3f141b0116f00ce3a1b6082c061c83ffd5a167a0d7ff5a4db479cd2974226"
+checksum = "69f49ba4d478c1ad6ba848ef096bbe2f77902f8630383fd213a5174b86f3c2f9"
 dependencies = [
  "chrono",
  "derive_more",
@@ -531,15 +531,14 @@ dependencies = [
 
 [[package]]
 name = "git2"
-version = "0.20.4"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b88256088d75a56f8ecfa070513a775dd9107f6530ef14919dac831af9cfe2b"
+checksum = "ddddbf932745a6be37109b6112d3ee09696106f848449069d3a57bba937ab82e"
 dependencies = [
  "bitflags",
  "libc",
  "libgit2-sys",
  "log",
- "url",
 ]
 
 [[package]]

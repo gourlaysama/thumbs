@@ -147,7 +147,10 @@ pub enum Command {
         /// A file to provide information about, or `-` to read a file path from standard input.
         /// 
         /// If no file is given, global information about the thumbnail cache itself is returned.
-        file: Option<MaybeStdin<PathBuf>>
+        file: Option<MaybeStdin<PathBuf>>,
+
+        #[clap(long, help_heading = "Flags")]
+        json: bool,
     }
 }
 

@@ -8,6 +8,10 @@
 
 * The Minimum Supported Rust Version for thumbs is now 1.88.
 
+### Features
+
+* Added JSON output to the `info` subcommand with `--json`.
+
 ## [0.5.3] - 2026-07-08
 
 ### Fixed

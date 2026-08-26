@@ -1239,6 +1239,7 @@ dependencies = [
  "log",
  "predicates",
  "serde",
+ "serde_json",
  "thumbs-rs",
  "url",
 ]
